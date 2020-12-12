@@ -1,0 +1,182 @@
+{
+  "Application": {
+    "Screens": [
+      {
+        "Components": [
+          {
+            "Filename": "__designer\\Blue_Backgrounds_main_bg_portrait_texture_240x320px.png",
+            "Alpha": 255,
+            "ScalingAlgorithm": "Nearest-neighbor",
+            "Style": "Image28",
+            "Name": "backgroundImage",
+            "X": 0,
+            "Y": 0,
+            "Width": 240,
+            "Height": 320,
+            "Type": "ScalableImage",
+            "Visible": true,
+            "Draggable": false,
+            "Clickable": false,
+            "Fadeable": false,
+            "Moveable": false
+          },
+          {
+            "Color": {
+              "Red": 219,
+              "Green": 16,
+              "Blue": 16
+            },
+            "CenterX": 5,
+            "CenterY": 5,
+            "Radius": 5,
+            "LineWidth": 0,
+            "StartAngle": 0,
+            "EndAngle": 360,
+            "CapPrecision": "Butt",
+            "Alpha": 255,
+            "Name": "dot",
+            "X": 200,
+            "Y": 155,
+            "Width": 10,
+            "Height": 10,
+            "Type": "Circle",
+            "Visible": true,
+            "Draggable": false,
+            "Clickable": false,
+            "Fadeable": false,
+            "Moveable": false
+          },
+          {
+            "Color": {
+              "Red": 0,
+              "Green": 73,
+              "Blue": 255
+            },
+            "Alpha": 202,
+            "Name": "player1",
+            "X": 40,
+            "Y": 41,
+            "Width": 15,
+            "Height": 15,
+            "Type": "Box",
+            "Visible": true,
+            "Draggable": false,
+            "Clickable": false,
+            "Fadeable": false,
+            "Moveable": false
+          },
+          {
+            "Color": {
+              "Red": 0,
+              "Green": 209,
+              "Blue": 71
+            },
+            "Alpha": 200,
+            "Name": "player2",
+            "X": 40,
+            "Y": 155,
+            "Width": 25,
+            "Height": 15,
+            "Type": "Box",
+            "Visible": true,
+            "Draggable": false,
+            "Clickable": false,
+            "Fadeable": false,
+            "Moveable": false
+          },
+          {
+            "Color": {
+              "Red": 252,
+              "Green": 144,
+              "Blue": 6
+            },
+            "Points": [
+              {
+                "X": 10.0,
+                "Y": 0.0
+              },
+              {
+                "X": 20.0,
+                "Y": 17.0
+              },
+              {
+                "X": 0.0,
+                "Y": 17.0
+              }
+            ],
+            "Angle": 0.0,
+            "XScale": 1.0,
+            "YScale": 1.0,
+            "XOrigin": 0.0,
+            "YOrigin": 0.0,
+            "Alpha": 200,
+            "Name": "player3",
+            "X": 40,
+            "Y": 250,
+            "Width": 20,
+            "Height": 17,
+            "Type": "Shape",
+            "Visible": true,
+            "Draggable": false,
+            "Clickable": false,
+            "Fadeable": false,
+            "Moveable": false
+          }
+        ],
+        "Interactions": [],
+        "Name": "Screen1",
+        "OverrideDefaultBufferSize": false,
+        "CanvasBufferSize": 3600
+      }
+    ],
+    "CustomContainerDefinitions": [],
+    "Name": "STM32F429I-DISCO",
+    "Resolution": {
+      "Width": 240,
+      "Height": 320
+    },
+    "SelectedColorDepth": 16,
+    "StartupScreenName": "Screen1",
+    "SelectedStartupLanguage": "GB",
+    "Skin": "Blue",
+    "TouchGfxPath": "../Middlewares/ST/touchgfx",
+    "UIPath": ".",
+    "AvailableColorDepths": [
+      16
+    ],
+    "AvailableLCDs": {
+      "16": "LCD16bpp"
+    },
+    "AvailableSections": [
+      "ExtFlashSection",
+      "IntFlashSection"
+    ],
+    "AvailableResolutions": [
+      {
+        "Width": 240,
+        "Height": 320
+      }
+    ],
+    "PhysicalButtons": [],
+    "FrameworkFeatures": {
+      "LCD16bpp": {
+        "Id": "LCD16bpp",
+        "IsEnabled": true
+      }
+    },
+    "GenerateAssetsCommand": "make -f simulator/gcc/Makefile assets -j8",
+    "PostGenerateCommand": "touchgfx update_project --project-file=simulator/msvs/Application.vcxproj",
+    "PostGenerateTargetCommand": "touchgfx update_project --project-file=../STM32F429I-DISCO.ioc --platform=m4",
+    "CompileSimulatorCommand": "make -f simulator/gcc/Makefile -j8",
+    "RunSimulatorCommand": "build\\bin\\simulator.exe",
+    "CompileTargetCommandOverride": "make -f ../gcc/Makefile -j8",
+    "FlashTargetCommandOverride": "make -f ../gcc/Makefile flash",
+    "LandscapeSkinX": 0,
+    "LandscapeSkinY": 0,
+    "PortraitSkinX": 0,
+    "PortraitSkinY": 0,
+    "DisplayOrientation": "Portrait"
+  },
+  "Version": "4.14.0",
+  "CreatedBy": "4.14.0"
+}

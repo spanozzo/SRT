@@ -1,0 +1,267 @@
+CPU mySystem {
+
+  OS myOs {
+    EE_OPT = "OS_EE_APPL_BUILD_DEBUG";
+    EE_OPT = "OS_EE_BUILD_DEBUG";
+//    EE_OPT = "OS_EE_VERBOSE";
+
+    CFLAGS = "-DCORE_M4";
+    CFLAGS = "-D__irq=\"\"";
+    CFLAGS = "-DUSE_BPP=16";
+    CFLAGS = "-I../TouchGFX/generated/fonts/include";
+    CFLAGS = "-I../TouchGFX/generated/gui_generated/include";
+    CFLAGS = "-I../TouchGFX/generated/images/include";
+    CFLAGS = "-I../TouchGFX/generated/texts/include";
+    CFLAGS = "-I../TouchGFX/gui/include";
+    CFLAGS = "-I../TouchGFX/target";
+    CFLAGS = "-I../TouchGFX/target/generated";
+
+    CPU_DATA = CORTEX_M {
+//      MODEL = M4;	/* No FPU SUpport */
+      MODEL = M4F;	/* FPU Support */
+      MULTI_STACK = TRUE;
+      CPU_CLOCK = 180.00;
+      COMPILER = GCC {
+        VERSION = "7.3.1";
+      };
+    };
+
+    MCU_DATA = STM32F4 {
+      MODEL = STM32F429XX;
+    };
+
+    BOARD_DATA = STM32F429I_DISC1;
+
+    LIB = STM32_CUBE_F4 {
+      /* Used to select Board: STM32F429I_DISC1 */
+      BOARD = STM32F429I_DISC1;
+      /* Used to select library version. */
+      VERSION = "1.24.0";
+      TOUCH_GFX = TRUE;
+      /* Create libstm32cubef4.a */
+      STAND_ALONE = TRUE;
+    };
+
+    STATUS = EXTENDED;
+    STARTUPHOOK = TRUE;         /* specific for this demo */
+    ERRORHOOK = TRUE;           /* specific for this demo */
+    SHUTDOWNHOOK = FALSE;
+    PRETASKHOOK = TRUE;
+    POSTTASKHOOK = TRUE;
+    USEGETSERVICEID = FALSE;
+    USEPARAMETERACCESS = FALSE;
+    USERESSCHEDULER = FALSE;
+
+    KERNEL_TYPE = OSEK {
+      CLASS = ECC1;
+      RQ = MQ;                  /* Multiple queue O(1) */
+    };
+
+  };
+
+  APPDATA myApp {
+    APP_SRC = "BoardConfiguration.cpp";
+    APP_SRC = "CortexMMCUInstrumentation.cpp";
+    APP_SRC = "main.cpp";
+    APP_SRC = "OSWrappers.cpp";
+    APP_SRC = "STM32DMA.cpp";
+    APP_SRC = "TouchGFXGeneratedHAL.cpp";
+    APP_SRC = "MessageQueue.cpp";
+    
+    APP_SRC = "TouchGFX/generated/fonts/src/ApplicationFontProvider.cpp";
+    APP_SRC = "TouchGFX/generated/fonts/src/CachedFont.cpp";     
+    APP_SRC = "TouchGFX/generated/fonts/src/Font_verdana_10_4bpp_0.cpp";
+    APP_SRC = "TouchGFX/generated/fonts/src/Font_verdana_20_4bpp_0.cpp";
+    APP_SRC = "TouchGFX/generated/fonts/src/Font_verdana_40_4bpp_0.cpp";
+    APP_SRC = "TouchGFX/generated/fonts/src/FontCache.cpp";  
+    APP_SRC = "TouchGFX/generated/fonts/src/GeneratedFont.cpp";  
+    APP_SRC = "TouchGFX/generated/fonts/src/Kerning_verdana_10_4bpp.cpp";
+    APP_SRC = "TouchGFX/generated/fonts/src/Kerning_verdana_20_4bpp.cpp";  
+    APP_SRC = "TouchGFX/generated/fonts/src/Kerning_verdana_40_4bpp.cpp";
+    APP_SRC = "TouchGFX/generated/fonts/src/Table_verdana_10_4bpp.cpp";
+    APP_SRC = "TouchGFX/generated/fonts/src/Table_verdana_20_4bpp.cpp";
+    APP_SRC = "TouchGFX/generated/fonts/src/Table_verdana_40_4bpp.cpp";
+
+    APP_SRC = "TouchGFX/generated/gui_generated/src/common/FrontendApplicationBase.cpp";
+
+    APP_SRC = "TouchGFX/generated/gui_generated/src/screen1_screen/Screen1ViewBase.cpp";
+
+    APP_SRC = "TouchGFX/generated/images/src/BitmapDatabase.cpp";
+    APP_SRC = "TouchGFX/generated/images/src/__designer/image_Blue_Backgrounds_main_bg_portrait_texture_240x320px.cpp";
+    APP_SRC = "TouchGFX/generated/images/src/image_moto_icon.cpp";
+    APP_SRC = "TouchGFX/generated/images/src/image_car_icon.cpp";
+
+    APP_SRC = "TouchGFX/generated/texts/src/Texts.cpp";
+    APP_SRC = "TouchGFX/generated/texts/src/TypedTextDatabase.cpp";
+
+    APP_SRC = "TouchGFX/gui/src/common/FrontendApplication.cpp";
+
+    APP_SRC = "TouchGFX/gui/src/screen1_screen/Screen1Presenter.cpp";
+    APP_SRC = "TouchGFX/gui/src/screen1_screen/Screen1View.cpp";
+
+    APP_SRC = "TouchGFX/gui/src/model/Model.cpp";
+
+    APP_SRC = "TouchGFX/target/STM32TouchController.cpp";
+    APP_SRC = "TouchGFX/target/TouchGFXGPIO.cpp";
+    APP_SRC = "TouchGFX/target/TouchGFXHAL.cpp";
+  };
+  
+  TASK TaskBackGround {
+    PRIORITY = 1;
+    ACTIVATION = 1;
+    SCHEDULE = FULL;
+    AUTOSTART = TRUE;
+    STACK = SHARED;
+  };
+  
+  // New random number
+  TASK Task0 {
+    PRIORITY = 4;
+    ACTIVATION = 1;
+    SCHEDULE = FULL;
+    AUTOSTART = TRUE;
+    STACK = SHARED;
+    RESOURCE = SerialResource;
+  };
+	
+  // GUI
+  TASK Task1 {
+    PRIORITY = 5;
+    ACTIVATION = 1;
+    SCHEDULE = FULL;
+    AUTOSTART = TRUE;
+    STACK = PRIVATE {
+      SIZE = 4096;
+    };
+    EVENT = TimerEvent;
+    EVENT = FrameBufferEvent;
+    EVENT = VSyncEvent;
+    RESOURCE = HalResource;
+  };
+
+  // Player1
+  TASK Task2 {
+    PRIORITY = 3;
+    ACTIVATION = 1;
+    SCHEDULE = FULL;
+    AUTOSTART = FALSE;
+    STACK = SHARED;
+    RESOURCE = SerialResource;
+  };
+
+  // Player2
+  TASK Task3 {
+    PRIORITY = 3;
+    ACTIVATION = 1;
+	SCHEDULE = NON;
+    AUTOSTART = FALSE;
+    STACK = SHARED;
+    RESOURCE = SerialResource;
+  };
+  
+  // Player3
+  TASK Task4 {
+    PRIORITY = 3;
+    ACTIVATION = 1;
+    SCHEDULE = FULL;
+    AUTOSTART = FALSE;
+    STACK = SHARED;
+    RESOURCE = SerialResource;
+  };
+
+  EVENT TimerEvent  { MASK = AUTO; };
+  EVENT FrameBufferEvent { MASK = AUTO; };
+  EVENT VSyncEvent { MASK = AUTO; };
+  
+  RESOURCE HalResource { RESOURCEPROPERTY = STANDARD; };
+  RESOURCE SerialResource { RESOURCEPROPERTY = STANDARD; };
+
+  COUNTER SystemTimer {
+    MINCYCLE = 1;                /* min value for cycle, typically 1 */
+    MAXALLOWEDVALUE = 65535;     /* once reached the counter wraps */
+    TICKSPERBASE = 1;            /* how many tick hw are need to obtain a sw tick */
+    TYPE = HARDWARE {            /* device that we are using */
+      SYSTEM_TIMER = TRUE;
+      PRIORITY     = 7;          /* ISR2 Priority of the systick timer */
+      DEVICE       = "SYSTICK";
+    };
+    SECONDSPERTICK = 0.001;      /* period of the system timer in seconds */
+  };
+  
+  ALARM AlarmTask0 {
+    COUNTER = SystemTimer;
+    ACTION = ACTIVATETASK { TASK = Task0; };
+    AUTOSTART = TRUE { ALARMTIME = 0; CYCLETIME = 10000; };
+  };
+
+  ALARM AlarmTask1 {
+    COUNTER = SystemTimer;
+    ACTION = SETEVENT { TASK = Task1; EVENT = TimerEvent; };
+    AUTOSTART = FALSE;
+  };
+
+  ALARM AlarmTask2 {
+    COUNTER = SystemTimer;
+    ACTION = ACTIVATETASK { TASK = Task2; };
+    AUTOSTART = TRUE { ALARMTIME = 20; CYCLETIME = 5; };
+  };
+  
+  ALARM AlarmTask3 {
+    COUNTER = SystemTimer;
+    ACTION = ACTIVATETASK { TASK = Task3; };
+    AUTOSTART = TRUE { ALARMTIME = 30; CYCLETIME = 5; };
+  };
+  
+  ALARM AlarmTask4 {
+    COUNTER = SystemTimer;
+    ACTION = ACTIVATETASK { TASK = Task4; };
+    AUTOSTART = TRUE { ALARMTIME = 25; CYCLETIME = 5; };
+  };
+
+  ISR HALTickISR {
+    CATEGORY = 1;
+    SOURCE = "TIM3";
+    PRIORITY = 10;
+  };
+
+  ISR SerialISR {
+    CATEGORY = 2;
+    SOURCE = "USART1";
+    PRIORITY = 9;
+  };
+  
+  ISR SerialDMATxISR {
+    CATEGORY = 2;
+    SOURCE = "DMA2_S7";
+    PRIORITY = 10;
+  }; 
+  
+  ISR ButtonsISR {
+    CATEGORY = 2;
+    SOURCE   = "EXTI0";
+    PRIORITY = 2;
+  };
+
+  ISR LtdcISR {
+    CATEGORY = 2;
+    SOURCE   = "LTDC";
+    PRIORITY = 4;
+    RESOURCE = HalResource;
+  };
+
+  ISR Dma2dISR {
+    CATEGORY = 2;
+    SOURCE   = "DMA2D";
+    PRIORITY = 4;
+    RESOURCE = HalResource;
+  };
+
+
+  ISR LtdcErISR {
+    CATEGORY = 2;
+    SOURCE   = "LTDC_ER";
+    PRIORITY = 5;
+    RESOURCE = HalResource;
+  };
+
+};
