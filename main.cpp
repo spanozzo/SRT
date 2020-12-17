@@ -66,7 +66,7 @@ MessageQueue* msg = MessageQueue::getInstance();
 
 extern UART_HandleTypeDef UartHandle;
 
-#define UART_BUFFER_SIZE 4096
+#define UART_BUFFER_SIZE 150000 // 4096
 
 typedef struct
 {
@@ -79,43 +79,33 @@ ring_buffer tx_buffer = { { 0 }, 0, 0};
 
 ring_buffer *_tx_buffer = &tx_buffer;
 
-bool mid = true;
-volatile uint32_t timer1 = 0;
-volatile uint32_t timer2 = 0;
-
-bool init = false;
-volatile uint32_t initTimer = 0;
+bool greenFlag = true;
 
 void Uart_sendstring (const char *s)
 {
-	// Buffer full!
-	if(!init) {
-		initTimer = HAL_GetTick();
-		init = true;
-	}
-	if(_tx_buffer->head > UART_BUFFER_SIZE/2 && mid){
-		mid = false;
-		HAL_UART_Transmit_DMA(&UartHandle, _tx_buffer->buffer, _tx_buffer->head);
-		// HAL_UART_Transmit_IT(&UartHandle, _tx_buffer->buffer, _tx_buffer->head);
-		_tx_buffer->tail = _tx_buffer->head;
-		timer1 = HAL_GetTick();
-	}
-	else {
-		if(_tx_buffer->head > UART_BUFFER_SIZE - 32) {
-			HAL_UART_Transmit_DMA(&UartHandle, _tx_buffer->buffer+_tx_buffer->tail, _tx_buffer->head-_tx_buffer->tail);
-			// HAL_UART_Transmit_IT(&UartHandle, _tx_buffer->buffer+_tx_buffer->tail, _tx_buffer->head-_tx_buffer->tail);
-			_tx_buffer->head = 0;
-			_tx_buffer->tail = 0;
-			mid = true;
-			timer2 = HAL_GetTick();
-		}
-	}
-
 	while(*s) {
 		int i = (_tx_buffer->head + 1) % UART_BUFFER_SIZE;
 		_tx_buffer->buffer[_tx_buffer->head] = (uint8_t)*s++;
 		_tx_buffer->head = i;
 	}
+
+	if(greenFlag) {
+		if(_tx_buffer->head > _tx_buffer->tail) {
+			HAL_UART_Transmit_DMA(&UartHandle, _tx_buffer->buffer+_tx_buffer->tail, _tx_buffer->head-_tx_buffer->tail);
+			_tx_buffer->tail = _tx_buffer->head;
+		}
+		else {
+			HAL_UART_Transmit_DMA(&UartHandle, _tx_buffer->buffer+_tx_buffer->tail, UART_BUFFER_SIZE-_tx_buffer->tail);
+			_tx_buffer->tail = 0;
+		}
+		greenFlag = false;
+	}
+}
+
+static uint8_t txCpltBuffer[16];
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *UartHandle)
+{
+	greenFlag = true;
 }
 
 TASK(TaskBackGround)
@@ -145,7 +135,7 @@ TASK(Task0)
 
 	timestamp0_ms = HAL_GetTick();
 
-	GetResource(SerialResource);
+//	GetResource(SerialResource);
 	if(timestamp0_start_ms != timestamp0_ms)
 		sprintf((char *)task0Buffer, "%u-0-%u-%u\n", nSerial, timestamp0_start_ms, timestamp0_ms);
 	else
@@ -161,7 +151,7 @@ TASK(Task0)
 
 	Uart_sendstring ((const char*)task0Buffer);
 	++nSerial;
-	ReleaseResource(SerialResource);
+//	ReleaseResource(SerialResource);
 	TerminateTask();
 }
 
@@ -206,23 +196,13 @@ TASK(Task2)
 	++task2Cnt;
 	timestamp2_ms = HAL_GetTick();
 
-	GetResource(SerialResource);
 	if(timestamp2_start_ms != timestamp2_ms)
 		sprintf((char *)task2Buffer, "%u-2-%u-%u\n", nSerial, timestamp2_start_ms, timestamp2_ms);
 	else
 		sprintf((char *)task2Buffer, "%u-2-%u\n", nSerial, timestamp2_start_ms);
 
-	/*
-	 * Prova scrittura diretta
-	len0 = strlen((char *)task2Buffer);
-	sprintf((char*)(_tx_buffer->buffer + _tx_buffer->head), (const char*)task2Buffer);
-	_tx_buffer->head += strlen((char *)task2Buffer);
-	Uart_sendstring ();
-	*/
-
 	Uart_sendstring ((const char*)task2Buffer);
 	++nSerial;
-	ReleaseResource(SerialResource);
     TerminateTask();
 }
 
@@ -232,8 +212,7 @@ volatile uint16_t P2PosY = 155;
 volatile uint16_t P2Win = 0;
 static uint8_t task3Buffer[32];
 
-TASK(Task3)
-{
+TASK(Task3) {
 	if(task3Cnt == 0)
 		timestamp3_init_ms = HAL_GetTick();
 	timestamp3_start_ms = HAL_GetTick();
@@ -259,23 +238,13 @@ TASK(Task3)
 	++task3Cnt;
 	timestamp3_ms = HAL_GetTick();
 
-	GetResource(SerialResource);
 	if(timestamp3_start_ms != timestamp3_ms)
 		sprintf((char *)task3Buffer, "%u-3-%u-%u\n", nSerial, timestamp3_start_ms, timestamp3_ms);
 	else
 		sprintf((char *)task3Buffer, "%u-3-%u\n", nSerial, timestamp3_start_ms);
 
-	/*
-	 * Prova scrittura diretta
-	len0 = strlen((char *)task3Buffer);
-	sprintf((char*)(_tx_buffer->buffer + _tx_buffer->head), (const char*)task3Buffer);
-	_tx_buffer->head += strlen((char *)task3Buffer);
-	Uart_sendstring ();
-	*/
-
 	Uart_sendstring ((const char*)task3Buffer);
 	++nSerial;
-	ReleaseResource(SerialResource);
 
     TerminateTask();
 }
@@ -321,23 +290,13 @@ TASK(Task4)
 	timestamp4_ms = HAL_GetTick();
 	uint8_t load = touchgfx::HAL::getInstance()->getMCULoadPct();
 
-	GetResource(SerialResource);
 	if(timestamp4_start_ms != timestamp4_ms)
 		sprintf((char *)task4Buffer, "%u-4-%u-%u-C%u%%\n", nSerial, timestamp4_start_ms, timestamp4_ms, load);
 	else
 		sprintf((char *)task4Buffer, "%u-4-%u--C%u%%\n", nSerial, timestamp4_ms, load);
 
-	/*
-	 * Prova scrittura diretta
-	len0 = strlen((char *)task4Buffer);
-	sprintf((char*)(_tx_buffer->buffer + _tx_buffer->head), (const char*)task4Buffer);
-	_tx_buffer->head += strlen((char *)task4Buffer);
-	Uart_sendstring ();
-	*/
-
 	Uart_sendstring ((const char*)task4Buffer);
 	++nSerial;
-	ReleaseResource(SerialResource);
 
     TerminateTask();
 }
@@ -383,16 +342,8 @@ void PostTaskHook(void)
 		else
 			sprintf((char *)task1Buffer, "%u-1-%u-%u\n", nSerial, timestamp1_start_ms, timestamp1_ms);
 
-		/*
-		 * Prova scrittura diretta
-		len0 = strlen((char *)task1Buffer);
-		sprintf((char*)(_tx_buffer->buffer + _tx_buffer->head), (const char*)task1Buffer);
-		_tx_buffer->head += strlen((char *)task1Buffer);
-		Uart_sendstring ();
-		*/
-
-		// Uart_sendstring ((const char*)task1Buffer);
-		// ++nSerial;
+		Uart_sendstring ((const char*)task1Buffer);
+		++nSerial;
 	}
 
 	if ((TaskID != TaskBackGround) && (lastTaskID == TaskBackGround) && bkgFlag){
@@ -403,16 +354,8 @@ void PostTaskHook(void)
 		else
 			sprintf((char *)taskBkgBuffer, "%u-B-%u-%u\n", nSerial, timestampBkg_start_ms, timestampBkg_ms);
 
-		/*
-		 * Prova scrittura diretta
-		len0 = strlen((char *)taskBkgBuffer);
-		sprintf((char*)(_tx_buffer->buffer + _tx_buffer->head), (const char*)taskBkgBuffer);
-		_tx_buffer->head += strlen((char *)taskBkgBuffer);
-		Uart_sendstring ();
-		*/
-
-		// Uart_sendstring ((const char*)taskBkgBuffer);
-		// ++nSerial;
+		Uart_sendstring ((const char*)taskBkgBuffer);
+		++nSerial;
 	}
 
 	last_timestamp = HAL_GetTick();
@@ -475,16 +418,9 @@ void ErrorHook(StatusType Error)
 			break;
 		};
 		error_timestamp = HAL_GetTick();
-		sprintf((char *)errorHookBuffer, "%u-%u-%u\n", nSerial, taskN, error_timestamp);
-		// Uart_sendstring ((const char*)errorHookBuffer);
-		// ++nSerial;
-
-		/*
-		 * Prova scrittura diretta
-		len0 = strlen((char *)errorHookBuffer);
-		sprintf((char*)(_tx_buffer->buffer + _tx_buffer->head), (const char*)errorHookBuffer);
-		_tx_buffer->head += strlen((char *)errorHookBuffer);
-		*/
+		sprintf((char *)errorHookBuffer, "%u-ERR%u-%u\n", nSerial, taskN, error_timestamp);
+		Uart_sendstring ((const char*)errorHookBuffer);
+		++nSerial;
 	}
     ++errorCnt;
     switch (Error) {

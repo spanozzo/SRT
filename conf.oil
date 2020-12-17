@@ -116,7 +116,7 @@ CPU mySystem {
   
   // New random number
   TASK Task0 {
-    PRIORITY = 4;
+    PRIORITY = 5;
     ACTIVATION = 1;
     SCHEDULE = FULL;
     AUTOSTART = TRUE;
@@ -126,7 +126,7 @@ CPU mySystem {
 	
   // GUI
   TASK Task1 {
-    PRIORITY = 5;
+    PRIORITY = 3;
     ACTIVATION = 1;
     SCHEDULE = FULL;
     AUTOSTART = TRUE;
@@ -141,7 +141,7 @@ CPU mySystem {
 
   // Player1
   TASK Task2 {
-    PRIORITY = 3;
+    PRIORITY = 4;
     ACTIVATION = 1;
     SCHEDULE = FULL;
     AUTOSTART = FALSE;
@@ -151,7 +151,7 @@ CPU mySystem {
 
   // Player2
   TASK Task3 {
-    PRIORITY = 3;
+    PRIORITY = 4;
     ACTIVATION = 1;
 	SCHEDULE = NON;
     AUTOSTART = FALSE;
@@ -161,7 +161,7 @@ CPU mySystem {
   
   // Player3
   TASK Task4 {
-    PRIORITY = 3;
+    PRIORITY = 4;
     ACTIVATION = 1;
     SCHEDULE = FULL;
     AUTOSTART = FALSE;
@@ -203,25 +203,25 @@ CPU mySystem {
   ALARM AlarmTask2 {
     COUNTER = SystemTimer;
     ACTION = ACTIVATETASK { TASK = Task2; };
-    AUTOSTART = TRUE { ALARMTIME = 20; CYCLETIME = 5; };
+    AUTOSTART = TRUE { ALARMTIME = 20; CYCLETIME = 1; };
   };
   
   ALARM AlarmTask3 {
     COUNTER = SystemTimer;
     ACTION = ACTIVATETASK { TASK = Task3; };
-    AUTOSTART = TRUE { ALARMTIME = 30; CYCLETIME = 5; };
+    AUTOSTART = TRUE { ALARMTIME = 30; CYCLETIME = 1; };
   };
   
   ALARM AlarmTask4 {
     COUNTER = SystemTimer;
     ACTION = ACTIVATETASK { TASK = Task4; };
-    AUTOSTART = TRUE { ALARMTIME = 25; CYCLETIME = 5; };
+    AUTOSTART = TRUE { ALARMTIME = 25; CYCLETIME = 1; };
   };
 
   ISR HALTickISR {
     CATEGORY = 1;
     SOURCE = "TIM3";
-    PRIORITY = 10;
+    PRIORITY = 8;
   };
 
   ISR SerialISR {
