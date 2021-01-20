@@ -57,6 +57,8 @@
 #include "stm32f429i_discovery.h"
 #include "ee.h"
 
+volatile unsigned int TIMER;
+
 namespace
 {
     /*
@@ -408,18 +410,6 @@ extern "C"
             GPIO::clear(GPIO::VSYNC_FREQ);
             HAL::getInstance()->frontPorchEntered();
         }
-    }
-    // DMA_NEW
-    /**
-      * @brief  Tx Transfer completed callback
-      * @param  UartHandle: UART handle.
-      * @note   This example shows a simple way to report end of DMA Tx transfer, and
-      *         you can add your own implementation.
-      * @retval None
-      */
-    void HAL_UART_TxCpltCallback(UART_HandleTypeDef *UartHandle)
-    {
-
     }
 
 }   /* extern "C" */

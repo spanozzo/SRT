@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <list>
+#include "DMA.cpp"
 
 using namespace touchgfx;
 
@@ -27,9 +28,9 @@ volatile uint32_t buttonCnt = 0;
 
 ISR2(ButtonsISR)
 {
-    ActivateTask(Task0);
     HAL_GPIO_EXTI_IRQHandler(KEY_BUTTON_PIN);
     ++buttonCnt;
+    ActivateTask(Task0);
 }
 
 /* TASKs */
@@ -57,56 +58,13 @@ volatile uint32_t timestamp3_ms;
 volatile uint32_t timestamp4_init_ms;
 volatile uint32_t timestamp4_start_ms;
 volatile uint32_t timestamp4_ms;
-volatile uint32_t last_timestamp;
 volatile uint32_t uart_timestamp;
 volatile uint32_t error_timestamp;
 volatile uint32_t nSerial = 0;
 
 MessageQueue* msg = MessageQueue::getInstance();
 
-extern UART_HandleTypeDef UartHandle;
 
-#define UART_BUFFER_SIZE 150000 // 4096
-
-typedef struct
-{
-  unsigned char buffer[UART_BUFFER_SIZE];
-  volatile unsigned int head;
-  volatile unsigned int tail;
-} ring_buffer;
-
-ring_buffer tx_buffer = { { 0 }, 0, 0};
-
-ring_buffer *_tx_buffer = &tx_buffer;
-
-bool greenFlag = true;
-
-void Uart_sendstring (const char *s)
-{
-	while(*s) {
-		int i = (_tx_buffer->head + 1) % UART_BUFFER_SIZE;
-		_tx_buffer->buffer[_tx_buffer->head] = (uint8_t)*s++;
-		_tx_buffer->head = i;
-	}
-
-	if(greenFlag) {
-		if(_tx_buffer->head > _tx_buffer->tail) {
-			HAL_UART_Transmit_DMA(&UartHandle, _tx_buffer->buffer+_tx_buffer->tail, _tx_buffer->head-_tx_buffer->tail);
-			_tx_buffer->tail = _tx_buffer->head;
-		}
-		else {
-			HAL_UART_Transmit_DMA(&UartHandle, _tx_buffer->buffer+_tx_buffer->tail, UART_BUFFER_SIZE-_tx_buffer->tail);
-			_tx_buffer->tail = 0;
-		}
-		greenFlag = false;
-	}
-}
-
-static uint8_t txCpltBuffer[16];
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *UartHandle)
-{
-	greenFlag = true;
-}
 
 TASK(TaskBackGround)
 {
@@ -117,6 +75,8 @@ volatile uint32_t timer = 0;
 static uint8_t task0Buffer[32];
 
 volatile uint32_t len0 = 0;
+
+volatile bool win = true;
 
 TASK(Task0)
 {
@@ -131,15 +91,18 @@ TASK(Task0)
 	targetX = uniX(rng);
 	targetY = uniY(rng);
 	msg->setTarget(targetX, targetY);
+	win = false;
 	++task0Cnt;
 
 	timestamp0_ms = HAL_GetTick();
 
+	uint16_t load = touchgfx::HAL::getInstance()->getMCULoadPct();
+
 //	GetResource(SerialResource);
 	if(timestamp0_start_ms != timestamp0_ms)
-		sprintf((char *)task0Buffer, "%u-0-%u-%u\n", nSerial, timestamp0_start_ms, timestamp0_ms);
+		sprintf((char *)task0Buffer, "%u-0-%u-%u-C%u%%\n", nSerial, timestamp0_start_ms, timestamp0_ms, load);
 	else
-		sprintf((char *)task0Buffer, "%u-0-%u\n", nSerial, timestamp0_start_ms);
+		sprintf((char *)task0Buffer, "%u-0-%u-C%u%%\n", nSerial, timestamp0_start_ms, load);
 
 	/*
 	 * Prova scrittura diretta
@@ -150,7 +113,7 @@ TASK(Task0)
 	*/
 
 	Uart_sendstring ((const char*)task0Buffer);
-	++nSerial;
+//	++nSerial;
 //	ReleaseResource(SerialResource);
 	TerminateTask();
 }
@@ -177,8 +140,11 @@ TASK(Task2)
 	timestamp2_start_ms = HAL_GetTick();
 
 	if ((P1PosX == targetX) && (P1PosY == targetY)) {
-		++P1Win;
-		ActivateTask(Task0);
+		if(!win) {
+			win = true;
+			++P1Win;
+			ActivateTask(Task0);	// consentito, mette Task0 in stato ready, non viene eseguito subito essendo a priorità minore
+		}
 	}
 	else {
 		if (P1PosX < targetX)
@@ -200,9 +166,11 @@ TASK(Task2)
 		sprintf((char *)task2Buffer, "%u-2-%u-%u\n", nSerial, timestamp2_start_ms, timestamp2_ms);
 	else
 		sprintf((char *)task2Buffer, "%u-2-%u\n", nSerial, timestamp2_start_ms);
+//	if ((P1PosX == targetX) && (P1PosY == targetY))
+//		ChainTask(Task0);
 
-	Uart_sendstring ((const char*)task2Buffer);
-	++nSerial;
+//	Uart_sendstring ((const char*)task2Buffer);
+//	++nSerial;
     TerminateTask();
 }
 
@@ -218,8 +186,11 @@ TASK(Task3) {
 	timestamp3_start_ms = HAL_GetTick();
 
 	if ((P2PosX == targetX) && (P2PosY == targetY)) {
-		++P2Win;
-		ActivateTask(Task0);
+		if(!win) {
+			win = true;
+			++P2Win;
+			ActivateTask(Task0);	// consentito, mette Task0 in stato ready, non viene eseguito subito essendo a priorità minore
+		}
 	}
 	else {
 		if (P2PosX < targetX)
@@ -243,8 +214,11 @@ TASK(Task3) {
 	else
 		sprintf((char *)task3Buffer, "%u-3-%u\n", nSerial, timestamp3_start_ms);
 
-	Uart_sendstring ((const char*)task3Buffer);
-	++nSerial;
+//	Uart_sendstring ((const char*)task3Buffer);
+//	++nSerial;
+
+//	if ((P2PosX == targetX) && (P2PosY == targetY))
+//		ChainTask(Task0);
 
     TerminateTask();
 }
@@ -255,6 +229,10 @@ volatile uint16_t P3PosY = 250;
 volatile uint16_t P3Win = 0;
 static uint8_t task4Buffer[32];
 
+volatile uint16_t load4 = 0;
+volatile uint32_t plusLoad = 0;
+volatile int sum = 0;
+
 TASK(Task4)
 {
 	if(task4Cnt == 0)
@@ -262,17 +240,19 @@ TASK(Task4)
 	timestamp4_start_ms = HAL_GetTick();
 
 	++task4Cnt;
-	int sum = 0;
-	/*
-	for(int i = 0; i < targetX*10; ++i) {
-		for(int z = 0; z < targetY*10; ++z) {
+
+	plusLoad = (((timestamp4_start_ms / 10000) + 1) * 100 ) + 500;//100;
+
+	for(int i = 0; i < plusLoad; ++i)
+		for(int z = 0; z < plusLoad; ++z)
 			sum += i+z;
-		}
-	}
-	*/
+
 	if ((P3PosX == targetX) && (P3PosY == targetY)) {
-		++P3Win;
-		ActivateTask(Task0);
+		if(!win) {
+			win = true;
+			++P3Win;
+			ActivateTask(Task0);	// consentito, mette Task0 in stato ready, non viene eseguito subito essendo a priorità minore
+		}
 	}
 	else {
 		if (P3PosX < targetX)
@@ -288,20 +268,163 @@ TASK(Task4)
 		msg -> setP3Position(P3PosX, P3PosY);
 	}
 	timestamp4_ms = HAL_GetTick();
-	uint8_t load = touchgfx::HAL::getInstance()->getMCULoadPct();
+	load4 = touchgfx::HAL::getInstance()->getMCULoadPct();
 
 	if(timestamp4_start_ms != timestamp4_ms)
-		sprintf((char *)task4Buffer, "%u-4-%u-%u-C%u%%\n", nSerial, timestamp4_start_ms, timestamp4_ms, load);
+		sprintf((char *)task4Buffer, "%u-4-%u-%u-PLOAD%u-C%u%%\n", nSerial, timestamp4_start_ms, timestamp4_ms, plusLoad, load4);
 	else
-		sprintf((char *)task4Buffer, "%u-4-%u--C%u%%\n", nSerial, timestamp4_ms, load);
+		sprintf((char *)task4Buffer, "%u-4-%u--C%u%%\n", nSerial, timestamp4_ms, load4);
 
 	Uart_sendstring ((const char*)task4Buffer);
 	++nSerial;
 
+//	if ((P3PosX == targetX) && (P3PosY == targetY))
+//		ChainTask(Task0);
+
     TerminateTask();
 }
 
+
+//--------------------------------------------------------------------------------------------
+//DeclareTask(Task5);
+//DeclareTask(Task6);
+//DeclareTask(Task7);
+//
+//volatile uint32_t task5Cnt;
+//volatile uint32_t task6Cnt;
+//volatile uint32_t task7Cnt;
+//
+//volatile uint32_t timestamp5_init_ms;
+//volatile uint32_t timestamp5_start_ms;
+//volatile uint32_t timestamp5_ms;
+//volatile uint32_t timestamp6_init_ms;
+//volatile uint32_t timestamp6_start_ms;
+//volatile uint32_t timestamp6_ms;
+//volatile uint32_t timestamp7_init_ms;
+//volatile uint32_t timestamp7_start_ms;
+//volatile uint32_t timestamp7_ms;
+//static uint8_t task5Buffer[32];
+//
+//TASK(Task5)
+//{
+//	if(task5Cnt == 0)
+//		timestamp5_init_ms = HAL_GetTick();
+//	timestamp5_start_ms = HAL_GetTick();
+//
+//	if ((P1PosX == targetX) && (P1PosY == targetY)) {
+//		P1Win = P1Win;
+//	}
+//	else {
+//		if (P1PosX < targetX)
+//			P1PosX = P1PosX;
+//		else
+//			if (P1PosX > targetX)
+//				P1PosX = P1PosX;
+//		if (P1PosY < targetY)
+//			P1PosX = P1PosX;
+//		else
+//			if (P1PosY > targetY)
+//				P1PosX = P1PosX;
+//	}
+//
+//	++task5Cnt;
+//	timestamp5_ms = HAL_GetTick();
+//
+//	if(timestamp5_start_ms != timestamp5_ms)
+//		sprintf((char *)task5Buffer, "%u-5-%u-%u\n", nSerial, timestamp5_start_ms, timestamp5_ms);
+//	else
+//		sprintf((char *)task5Buffer, "%u-5-%u\n", nSerial, timestamp5_ms);
+//
+////	Uart_sendstring ((const char*)task5Buffer);
+////	++nSerial;
+//
+//    TerminateTask();
+//}
+//
+//static uint8_t task6Buffer[32];
+//
+//TASK(Task6)
+//{
+//	if(task6Cnt == 0)
+//		timestamp6_init_ms = HAL_GetTick();
+//	timestamp6_start_ms = HAL_GetTick();
+//
+//	if ((P1PosX == targetX) && (P1PosY == targetY)) {
+//		P1Win = P1Win;
+//	}
+//	else {
+//		if (P1PosX < targetX)
+//			P1PosX = P1PosX;
+//		else
+//			if (P1PosX > targetX)
+//				P1PosX = P1PosX;
+//		if (P1PosY < targetY)
+//			P1PosX = P1PosX;
+//		else
+//			if (P1PosY > targetY)
+//				P1PosX = P1PosX;
+//	}
+//
+//	++task6Cnt;
+//	timestamp6_ms = HAL_GetTick();
+//
+//	if(timestamp6_start_ms != timestamp6_ms)
+//		sprintf((char *)task6Buffer, "%u-6-%u-%u\n", nSerial, timestamp6_start_ms, timestamp6_ms);
+//	else
+//		sprintf((char *)task6Buffer, "%u-6-%u\n", nSerial, timestamp6_ms);
+//
+////	Uart_sendstring ((const char*)task6Buffer);
+////	++nSerial;
+//
+//    TerminateTask();
+//}
+//
+//static uint8_t task7Buffer[32];
+//
+//TASK(Task7)
+//{
+//	if(task7Cnt == 0)
+//		timestamp7_init_ms = HAL_GetTick();
+//	timestamp7_start_ms = HAL_GetTick();
+//
+//	if ((P1PosX == targetX) && (P1PosY == targetY)) {
+//		P1Win = P1Win;
+//	}
+//	else {
+//		if (P1PosX < targetX)
+//			P1PosX = P1PosX;
+//		else
+//			if (P1PosX > targetX)
+//				P1PosX = P1PosX;
+//		if (P1PosY < targetY)
+//			P1PosX = P1PosX;
+//		else
+//			if (P1PosY > targetY)
+//				P1PosX = P1PosX;
+//	}
+//
+//	++task7Cnt;
+//	timestamp7_ms = HAL_GetTick();
+//
+//	if(timestamp7_start_ms != timestamp7_ms)
+//		sprintf((char *)task7Buffer, "%u-7-%u-%u\n", nSerial, timestamp7_start_ms, timestamp7_ms);
+//	else
+//		sprintf((char *)task7Buffer, "%u-7-%u\n", nSerial, timestamp7_ms);
+//
+////	Uart_sendstring ((const char*)task7Buffer);
+////	++nSerial;
+//
+//    TerminateTask();
+//}
+//
+//volatile uint32_t errorT5Cnt = 0;
+//volatile uint32_t errorT6Cnt = 0;
+//volatile uint32_t errorT7Cnt = 0;
+
+//--------------------------------------------------------------------------------------------
+
 TaskType lastTaskID = Task0;
+volatile uint32_t last_timestamp;
 bool bkgFlag = false;
 
 /* Hooks */
@@ -312,10 +435,7 @@ void PreTaskHook(void)
 
 	if (TaskID == TaskBackGround) {
 		touchgfx::HAL::getInstance()->setMCUActive(OSEE_FALSE);
-		if(!bkgFlag) {
-			timestampBkg_start_ms = HAL_GetTick();
-			bkgFlag = true;
-		}
+		timestampBkg_start_ms = HAL_GetTick();
 	}
 
 	if (TaskID == Task1) {
@@ -334,32 +454,51 @@ void PostTaskHook(void)
 
 	if (TaskID == TaskBackGround) {
 		touchgfx::HAL::getInstance()->setMCUActive(OSEE_TRUE);
-	}
-	if ((TaskID != Task1) && (lastTaskID == Task1)){
-		timestamp1_ms = last_timestamp;
-		if(timestamp1_start_ms == timestamp1_ms)
-			sprintf((char *)task1Buffer, "%u-1-%u\n", nSerial, timestamp1_start_ms);
-		else
-			sprintf((char *)task1Buffer, "%u-1-%u-%u\n", nSerial, timestamp1_start_ms, timestamp1_ms);
 
-		Uart_sendstring ((const char*)task1Buffer);
-		++nSerial;
-	}
-
-	if ((TaskID != TaskBackGround) && (lastTaskID == TaskBackGround) && bkgFlag){
-		bkgFlag = false;
-		timestampBkg_ms = last_timestamp;
+		timestampBkg_ms = HAL_GetTick();
 		if(timestampBkg_start_ms == timestampBkg_ms)
 			sprintf((char *)taskBkgBuffer, "%u-B-%u\n", nSerial, timestampBkg_start_ms);
 		else
 			sprintf((char *)taskBkgBuffer, "%u-B-%u-%u\n", nSerial, timestampBkg_start_ms, timestampBkg_ms);
-
-		Uart_sendstring ((const char*)taskBkgBuffer);
-		++nSerial;
+//		Uart_sendstring ((const char*)taskBkgBuffer);
+//		++nSerial;
 	}
 
-	last_timestamp = HAL_GetTick();
-	lastTaskID = TaskID;
+	if(TaskID == Task1) {
+		timestamp1_ms = HAL_GetTick();
+		if(timestamp1_start_ms == timestamp1_ms)
+			sprintf((char *)task1Buffer, "%u-1-%u\n", nSerial, timestamp1_start_ms);
+		else
+			sprintf((char *)task1Buffer, "%u-1-%u-%u\n", nSerial, timestamp1_start_ms, timestamp1_ms);
+//		Uart_sendstring ((const char*)task1Buffer);
+//		++nSerial;
+	}
+
+//	if ((TaskID != Task1) && (lastTaskID == Task1)){
+//		timestamp1_ms = last_timestamp;
+//		if(timestamp1_start_ms == timestamp1_ms)
+//			sprintf((char *)task1Buffer, "%u-1-%u\n", nSerial, timestamp1_start_ms);
+//		else
+//			sprintf((char *)task1Buffer, "%u-1-%u-%u\n", nSerial, timestamp1_start_ms, timestamp1_ms);
+//
+//		Uart_sendstring ((const char*)task1Buffer);
+//		++nSerial;
+//	}
+//
+//	if ((TaskID != TaskBackGround) && (lastTaskID == TaskBackGround) && bkgFlag){
+//		bkgFlag = false;
+//		timestampBkg_ms = last_timestamp;
+//		if(timestampBkg_start_ms == timestampBkg_ms)
+//			sprintf((char *)taskBkgBuffer, "%u-B-%u\n", nSerial, timestampBkg_start_ms);
+//		else
+//			sprintf((char *)taskBkgBuffer, "%u-B-%u-%u\n", nSerial, timestampBkg_start_ms, timestampBkg_ms);
+//
+//		Uart_sendstring ((const char*)taskBkgBuffer);
+//		++nSerial;
+//	}
+//
+//	last_timestamp = HAL_GetTick();
+//	lastTaskID = TaskID;
 }
 
 void StartupHook(void)
@@ -375,6 +514,7 @@ void idle_hook ( void )
 	;
 }
 
+
 volatile uint32_t errorCnt = 0;
 volatile uint32_t errorTBkgCnt = 0;
 volatile uint32_t errorT0Cnt = 0;
@@ -385,12 +525,19 @@ volatile uint32_t errorT4Cnt = 0;
 volatile uint32_t taskN = 100;
 
 static uint8_t errorHookBuffer[32];
+volatile bool gaga = false;
+
 
 void ErrorHook(StatusType Error)
 {
+
 	if(Error == E_OS_LIMIT) {
 		TaskType TaskID;
 		GetTaskID(&TaskID);
+//		volatile OSServiceIdType serviceID = OSErrorGetServiceId();
+//		volatile TaskType TaskError = OSError_ActivateTask_TaskID();
+//		volatile TaskType AlarmError = OSError_GetAlarm_AlarmID();
+//		volatile TaskType TaskError1 = OSError_OSId_Action_TaskID();
 		switch (TaskID) {
 			case TaskBackGround:
 				taskN = 99;
@@ -406,27 +553,37 @@ void ErrorHook(StatusType Error)
 			break;
 			case Task2:
 				taskN = 2;
-				errorT2Cnt;
+				++errorT2Cnt;
 			break;
 			case Task3:
 				taskN = 3;
-				errorT3Cnt;
+				++errorT3Cnt;
 			break;
 			case Task4:
 				taskN = 4;
-				errorT4Cnt;
+				++errorT4Cnt;
 			break;
+//			-------------------------------------------------------------
+//			case Task5:
+//				taskN = 5;
+//				++errorT5Cnt;
+//			break;
+//			case Task6:
+//				taskN = 6;
+//				++errorT6Cnt;
+//			break;
+//			case Task7:
+//				taskN = 7;
+//				++errorT7Cnt;
+//			break;
+//			-------------------------------------------------------------
 		};
 		error_timestamp = HAL_GetTick();
-		sprintf((char *)errorHookBuffer, "%u-ERR%u-%u\n", nSerial, taskN, error_timestamp);
+		sprintf((char *)errorHookBuffer, "%u-ERR%u-%u-PLOAD%u-C%u%%\n", nSerial, taskN, error_timestamp, plusLoad, load4);
 		Uart_sendstring ((const char*)errorHookBuffer);
 		++nSerial;
 	}
     ++errorCnt;
-    switch (Error) {
-    default:
-       break;
-    };
 }
 
 extern void touchgfx::hw_init();

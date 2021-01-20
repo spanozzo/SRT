@@ -59,16 +59,20 @@ void OSWrappers::initialize()
 
 }
 
+// Called by graphics engine to get exclusive access to the framebuffer. This will block the engine until the DMA2D is done (if running)
 void OSWrappers::takeFrameBufferSemaphore()
 {
     WaitEvent(FrameBufferEvent);
     ClearEvent(FrameBufferEvent);
 }
+
+// Releases the framebuffer lock
 void OSWrappers::giveFrameBufferSemaphore()
 {
     SetEvent(Task1, FrameBufferEvent);
 }
 
+// Ensure that the lock is taken. This method does not block, but ensures that the next call to takeFrameBufferSemaphore will block its caller
 void OSWrappers::tryTakeFrameBufferSemaphore()
 {
     EventMaskType EventMask;
@@ -78,25 +82,28 @@ void OSWrappers::tryTakeFrameBufferSemaphore()
     }
 }
 
+// Releases the framebuffer lock from an interrupt context
 void OSWrappers::giveFrameBufferSemaphoreFromISR()
 {
     SetEvent(Task1, FrameBufferEvent);
 }
 
+// This method should be called from the display driver when the display is ready for the next frame.
 void OSWrappers::signalVSync()
 {
     SetEvent(Task1, VSyncEvent);
 }
 
+// Called by the graphics engine to wait. Should not return until signalVSync is called.
 void OSWrappers::waitForVSync()
 {
     WaitEvent(VSyncEvent);
     ClearEvent(VSyncEvent);
 }
 
-void OSWrappers::taskDelay(uint16_t ms)
-{
-    SetRelAlarm(AlarmTask1, ms, 0U);
-    WaitEvent(TimerEvent);
-    ClearEvent(TimerEvent);
-}
+//void OSWrappers::taskDelay(uint16_t ms)
+//{
+//    SetRelAlarm(AlarmTask1, ms, 0U);
+//    WaitEvent(TimerEvent);
+//    ClearEvent(TimerEvent);
+//}

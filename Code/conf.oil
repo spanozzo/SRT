@@ -43,14 +43,14 @@ CPU mySystem {
     };
 
     STATUS = EXTENDED;
-    STARTUPHOOK = TRUE;         /* specific for this demo */
-    ERRORHOOK = TRUE;           /* specific for this demo */
+    STARTUPHOOK = TRUE;         
+    ERRORHOOK = TRUE;          
     SHUTDOWNHOOK = FALSE;
     PRETASKHOOK = TRUE;
     POSTTASKHOOK = TRUE;
-    USEGETSERVICEID = FALSE;
-    USEPARAMETERACCESS = FALSE;
-    USERESSCHEDULER = FALSE;
+    USEGETSERVICEID = TRUE;		// MODIFICATO
+    USEPARAMETERACCESS = TRUE;  // MODIFICATO
+    USERESSCHEDULER = TRUE;		// MODIFICATO
 
     KERNEL_TYPE = OSEK {
       CLASS = ECC1;
@@ -116,17 +116,17 @@ CPU mySystem {
   
   // New random number
   TASK Task0 {
-    PRIORITY = 5;
+    PRIORITY = 2;
     ACTIVATION = 1;
     SCHEDULE = FULL;
     AUTOSTART = TRUE;
     STACK = SHARED;
-    RESOURCE = SerialResource;
+//    RESOURCE = SerialResource;
   };
 	
   // GUI
   TASK Task1 {
-    PRIORITY = 3;
+    PRIORITY = 7;
     ACTIVATION = 1;
     SCHEDULE = FULL;
     AUTOSTART = TRUE;
@@ -136,7 +136,7 @@ CPU mySystem {
     EVENT = TimerEvent;
     EVENT = FrameBufferEvent;
     EVENT = VSyncEvent;
-    RESOURCE = HalResource;
+	RESOURCE = HalResource;
   };
 
   // Player1
@@ -146,35 +146,64 @@ CPU mySystem {
     SCHEDULE = FULL;
     AUTOSTART = FALSE;
     STACK = SHARED;
-    RESOURCE = SerialResource;
+//    RESOURCE = SerialResource;
   };
 
   // Player2
   TASK Task3 {
-    PRIORITY = 4;
+    PRIORITY = 5;
     ACTIVATION = 1;
-	SCHEDULE = NON;
+	SCHEDULE = FULL;
     AUTOSTART = FALSE;
     STACK = SHARED;
-    RESOURCE = SerialResource;
+//    RESOURCE = SerialResource;
   };
   
   // Player3
   TASK Task4 {
-    PRIORITY = 4;
+    PRIORITY = 6;
     ACTIVATION = 1;
     SCHEDULE = FULL;
     AUTOSTART = FALSE;
     STACK = SHARED;
-    RESOURCE = SerialResource;
   };
+  
+
+//  ------------------------------------------------------------------
+//  // Player4
+//  TASK Task5 {
+//    PRIORITY = 4;
+//    ACTIVATION = 1;
+//    SCHEDULE = FULL;
+//    AUTOSTART = FALSE;
+//    STACK = SHARED;
+//  };
+//
+//  // Player5
+//  TASK Task6 {
+//    PRIORITY = 5;
+//    ACTIVATION = 1;
+//	SCHEDULE = FULL;
+//    AUTOSTART = FALSE;
+//    STACK = SHARED;
+//  };
+//  
+//  // Player6
+//  TASK Task7 {
+//    PRIORITY = 6;
+//    ACTIVATION = 1;
+//    SCHEDULE = FULL;
+//    AUTOSTART = FALSE;
+//    STACK = SHARED;
+//  };
+//  ------------------------------------------------------------------
+  
 
   EVENT TimerEvent  { MASK = AUTO; };
   EVENT FrameBufferEvent { MASK = AUTO; };
   EVENT VSyncEvent { MASK = AUTO; };
   
   RESOURCE HalResource { RESOURCEPROPERTY = STANDARD; };
-  RESOURCE SerialResource { RESOURCEPROPERTY = STANDARD; };
 
   COUNTER SystemTimer {
     MINCYCLE = 1;                /* min value for cycle, typically 1 */
@@ -182,7 +211,7 @@ CPU mySystem {
     TICKSPERBASE = 1;            /* how many tick hw are need to obtain a sw tick */
     TYPE = HARDWARE {            /* device that we are using */
       SYSTEM_TIMER = TRUE;
-      PRIORITY     = 7;          /* ISR2 Priority of the systick timer */
+      PRIORITY     = 9;          /* ISR2 Priority of the systick timer */
       DEVICE       = "SYSTICK";
     };
     SECONDSPERTICK = 0.001;      /* period of the system timer in seconds */
@@ -203,37 +232,58 @@ CPU mySystem {
   ALARM AlarmTask2 {
     COUNTER = SystemTimer;
     ACTION = ACTIVATETASK { TASK = Task2; };
-    AUTOSTART = TRUE { ALARMTIME = 20; CYCLETIME = 1; };
+    AUTOSTART = TRUE { ALARMTIME = 0; CYCLETIME = 10; };
   };
   
   ALARM AlarmTask3 {
     COUNTER = SystemTimer;
     ACTION = ACTIVATETASK { TASK = Task3; };
-    AUTOSTART = TRUE { ALARMTIME = 30; CYCLETIME = 1; };
+    AUTOSTART = TRUE { ALARMTIME = 0; CYCLETIME = 10; };
   };
   
   ALARM AlarmTask4 {
     COUNTER = SystemTimer;
     ACTION = ACTIVATETASK { TASK = Task4; };
-    AUTOSTART = TRUE { ALARMTIME = 25; CYCLETIME = 1; };
+    AUTOSTART = TRUE { ALARMTIME = 0; CYCLETIME = 10; };
   };
+  
+//  ------------------------------------------------------------------
+//  ALARM AlarmTask5 {
+//    COUNTER = SystemTimer;
+//    ACTION = ACTIVATETASK { TASK = Task5; };
+//    AUTOSTART = TRUE { ALARMTIME = 0; CYCLETIME = 10; };
+//  };
+//  
+//  ALARM AlarmTask6 {
+//    COUNTER = SystemTimer;
+//    ACTION = ACTIVATETASK { TASK = Task6; };
+//    AUTOSTART = TRUE { ALARMTIME = 0; CYCLETIME = 10; };
+//  };
+//  
+//  ALARM AlarmTask7 {
+//    COUNTER = SystemTimer;
+//    ACTION = ACTIVATETASK { TASK = Task7; };
+//    AUTOSTART = TRUE { ALARMTIME = 0; CYCLETIME = 10; };
+//  };
+//  ------------------------------------------------------------------
+  
 
   ISR HALTickISR {
     CATEGORY = 1;
     SOURCE = "TIM3";
-    PRIORITY = 8;
+    PRIORITY = 6;
   };
 
   ISR SerialISR {
     CATEGORY = 2;
     SOURCE = "USART1";
-    PRIORITY = 9;
+    PRIORITY = 7;
   };
   
   ISR SerialDMATxISR {
     CATEGORY = 2;
     SOURCE = "DMA2_S7";
-    PRIORITY = 10;
+    PRIORITY = 8;
   }; 
   
   ISR ButtonsISR {
@@ -245,7 +295,7 @@ CPU mySystem {
   ISR LtdcISR {
     CATEGORY = 2;
     SOURCE   = "LTDC";
-    PRIORITY = 4;
+    PRIORITY = 3;
     RESOURCE = HalResource;
   };
 
