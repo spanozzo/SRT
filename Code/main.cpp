@@ -112,7 +112,7 @@ TASK(Task0)
 	Uart_sendstring ();
 	*/
 
-	Uart_sendstring ((const char*)task0Buffer);
+//	Uart_sendstring ((const char*)task0Buffer);
 //	++nSerial;
 //	ReleaseResource(SerialResource);
 	TerminateTask();
@@ -230,8 +230,9 @@ volatile uint16_t P3Win = 0;
 static uint8_t task4Buffer[32];
 
 volatile uint16_t load4 = 0;
-volatile uint32_t plusLoad = 0;
+volatile int plusLoad = 0;
 volatile int sum = 0;
+volatile bool stoppi = false;
 
 TASK(Task4)
 {
@@ -241,11 +242,17 @@ TASK(Task4)
 
 	++task4Cnt;
 
-	plusLoad = (((timestamp4_start_ms / 10000) + 1) * 100 ) + 500;//100;
+	if(timestamp4_start_ms > 10000)
+		stoppi = true;
 
-	for(int i = 0; i < plusLoad; ++i)
-		for(int z = 0; z < plusLoad; ++z)
-			sum += i+z;
+//	plusLoad = (((timestamp4_start_ms / 10000) + 1) * 100 ) + 100;
+//
+//	if(plusLoad > 1100)
+//		stoppi = true;
+//
+//	for(int i = 0; i < plusLoad; ++i)
+//		for(int z = 0; z < plusLoad; ++z)
+//			sum += i+z;
 
 	if ((P3PosX == targetX) && (P3PosY == targetY)) {
 		if(!win) {
@@ -420,7 +427,6 @@ TASK(Task4)
 //volatile uint32_t errorT5Cnt = 0;
 //volatile uint32_t errorT6Cnt = 0;
 //volatile uint32_t errorT7Cnt = 0;
-
 //--------------------------------------------------------------------------------------------
 
 TaskType lastTaskID = Task0;

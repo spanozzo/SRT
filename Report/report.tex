@@ -66,7 +66,7 @@
 \maketitle
 
 \begin{abstract}
-Questa relazione descrive un'applicazione \textit{real-time} sviluppata con il supporto di ERIKA³, un \textit{Hard Real Time Operating System (RTOS)} certificato OSEK/VDX in utilizzo in ambito automobilistico. L'applicazione consiste in diversi \textit{task} che competono fra loro per raggiungere un obiettivo \textit{target}. L'applicazione è testata in diverse configurazioni e condizioni di carico per vedere come queste influenzino l'esecuzione del sistema; in particolare utilizzo come metrica il numero di errori di attivazione dei \textit{task}, equiparabili a \textit{deadline-miss} quando un solo \textit{job} per \textit{task} è autorizzato ad eseguire simultaneamente e le \textit{deadline} sono implicite.
+Questa relazione descrive un'applicazione \textit{real-time} sviluppata con il supporto di ERIKA³, un \textit{Hard Real Time Operating System (RTOS)} certificato OSEK/VDX in utilizzo in ambito automobilistico. L'applicazione consiste in diversi \textit{task} che competono fra loro per raggiungere un obiettivo \textit{target}. L'applicazione è testata in diverse configurazioni e condizioni di carico per vedere come queste influenzino l'esecuzione del sistema; in particolare utilizzo come metrica il numero di errori di attivazione dei \textit{task}, equiparabili a \textit{deadline-miss} quando un \textit{task} supporta una sola attivazione e le \textit{deadline} sono implicite.
 \end{abstract}
 
 
@@ -81,7 +81,7 @@ Per questo motivo, nel corso degli anni, sono nati degli standard per garantire 
 
 Erika³\footnote{\url{http://erika-enterprise.com/}} è un \textit{Hard Real Time Operating System (RTOS)} che implementa le funzionalità richieste dagli standard sopracitati, fornendo delle primitive che semplificano lo sviluppo e offrono un livello di astrazione rispetto all'hardware sottostante.
 
-Per lo svolgimento di questa analisi, si è quindi scelto l'utilizzo di Erika³ su una \textit{bare-board} STM32F429I-Discovery\footnote{\url{https://www.st.com/en/evaluation-tools/32f429idiscovery.html}}, un kit per lo sviluppo \textit{low-cost} con un microcontrollore STM32F4 e un \textit{core} ARM Cortex-M4.
+Per lo svolgimento di questa analisi ho quindi scelto l'utilizzo di Erika³ su una \textit{bare-board} STM32F429I-Discovery\footnote{\url{https://www.st.com/en/evaluation-tools/32f429idiscovery.html}}, un kit per lo sviluppo \textit{low-cost} con un microcontrollore STM32F4 e un \textit{core} ARM Cortex-M4.
 
 \section{ERIKA³}
 Come già detto, Erika³ supporta lo standard OSEK/VDX, il che comporta delle scelte progettuali ben definite.
@@ -181,7 +181,7 @@ Esiste inoltre una suddivisione in categorie di alcuni servizi che il sistema of
 	\end{enumerate}
 	Gli ISR1 hanno priorità sempre maggiore degli ISR2, infatti i primi possono interrompere anche operazioni del \textit{kernel}, mentre i secondi vengono eseguiti in seguito alla terminazione di queste.
 \end{itemize}
-Qualsiasi sia la priorità dei servizi offerti dall'OS, il compilatore assicura che ci sia un ordine ben preciso a \textit{runtime} durante l'esecuzione di questi. Risulta quindi che gli interrupt avranno sempre la precedenza sui \textit{task}, e gli ISR1 avranno a loro volta la precedenza sugli ISR2, come si può vedere dalla Figura \ref{processing-levels}.
+Qualsiasi sia la priorità dei servizi offerti dall'OS, il compilatore assicura che ci sia un ordine ben preciso a \textit{runtime} durante l'esecuzione di questi. Risulta quindi che gli interrupt avranno sempre la precedenza sui \textit{task}, e gli ISR1 avranno a loro volta la precedenza sugli ISR2, come si può vedere dalla Figura \ref{processing-levels} .
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=4in]{image/Priority_levels.png}
@@ -193,12 +193,14 @@ Qualsiasi sia la priorità dei servizi offerti dall'OS, il compilatore assicura 
 L'applicazione proposta utilizza quindi ERIKA³ e lo standard OSEK/VDX. Oltre a ciò, utilizza anche il \textit{framework} TouchGFX\footnote{\url{https://support.touchgfx.com/docs/introduction/welcome}}, che aiuta lo sviluppo di interfacce grafiche complesse per sistemi hardware basati su microcontrollori STM32. Questo \textit{framework} mantiene sincronizzata l'interfaccia grafica del display con il modello dei dati rappresentanti gli oggetti sullo schermo e comunica eventuali interazioni con essi attraverso il \textit{touchscreen}.
 
 L'applicazione di test consiste in un \textit{task} che genera un punto target sullo schermo, indicato tramite un cerchio rosso, e tre \textit{task} (o sei in base al test) con parametri di configurazione e implementazione differenti che lo devono raggiungere.
-È di interesse capire come l'applicazione e il sistema reagiscono alle interferenze e in differenti condizioni di carico. 
-Come metrica di confronto utilizzo il numero di \textit{deadline miss} dei \textit{task}, misurata con l'ausilio della primitiva \textit{ErrorHook} in seguito definita. Tramite questa, infatti, è possibile sapere e gestire quando un nuovo \textit{job} viene attivato, ad esempio da un allarme, mentre un vecchio \textit{job} dello stesso \textit{task} è ancora attivo (i.e. non nello stato \textit{suspended}). Con la condizione di \textit{deadline} implicite, questo significa che il vecchio \textit{job} ha una \textit{deadline miss}. In seguito chiamo questi eventi errori di attivazione.
+È di interesse capire come l'applicazione e il sistema reagiscono all'aumentare delle interferenze e in differenti condizioni di carico. Mi attendo quindi un rallentamento della reattività del sistema e nello specifico, in base alle differenti configurazioni, una visibile differenza nello spostamento dei giocatori visualizzati a schermo che rappresentano i \textit{task} del sistema.
+
+Per avere una valutazione quantitativa e analizzare quello che accade a schermo, come metrica di confronto fra le varie configurazioni utilizzo il numero di \textit{deadline miss} dei \textit{task}, misurata con l'ausilio della primitiva \textit{ErrorHook} in seguito definita. Tramite questa, infatti, è possibile sapere e gestire quando un nuovo \textit{job} viene attivato, ad esempio da un allarme, mentre un vecchio \textit{job} dello stesso \textit{task} è ancora attivo (i.e. non nello stato \textit{suspended}). Con la condizione di \textit{deadline} implicite e \textit{task} attivati solamente da allarmi periodici, questo significa che il vecchio \textit{job} ha una \textit{deadline miss}. In seguito chiamo questi eventi errori di attivazione. 
+Tramite questa metrica, quindi, cercherò di valutare il comportamento del sistema nell'insieme e in seguito, più nello specifico, quali sono i \textit{task} che subiscono più interferenze.
 
 \subsection{Configurazione del sistema}
 La \textit{conformance class} dei \textit{task} del sistema è di tipo ECC1, in quanto il \textit{task} che gestisce l'interfaccia grafica non termina mai e rimane in attesa di eventi che notificano un nuovo \textit{framebuffer} per aggiornare il display.
-Di seguito è riportata la definizione del Task1, che si occupa della gestione dell'interfaccia grafica.
+Di seguito riporto la definizione del Task1, che si occupa della gestione dell'interfaccia grafica.
 \begin{lstlisting}[language=C]
 1  TASK Task1 {
 2	 PRIORITY = 3;               /* Priorita del task */
@@ -213,7 +215,7 @@ Di seguito è riportata la definizione del Task1, che si occupa della gestione d
 11	 RESOURCE = HalResource;     /* Utilizzo della risorsa 'HalResource' */
 12 };
 \end{lstlisting}
-Gli eventi dichiarati per questo \textit{task} sono necessari per mantenere sincronizzato il display e l'\textit{engine}, e per supportare questi è necessario quindi che il suo \textit{stack} sia privato. Nello stesso istante può essere attivo (i.e. non nello stato \textit{suspended}) un solo \textit{job} per questo \textit{task}, come anche definito nelle \textit{Conformance Classes} già nominate \ref{task-class}. 
+Gli eventi dichiarati per questo \textit{task} sono necessari per mantenere sincronizzato il display e l'\textit{engine}, e per supportare questi è necessario quindi che il suo \textit{stack} sia privato. Il numero di attivazioni supportate si riferisce a cosa accade quando viene attivato il \textit{task} se questo è già in esecuzione: la configurazione scelta (una sola attivazione) implica che ogni attivazione pone il \textit{task} nello stato \textit{ready} solamente se quel \textit{task} non è già attivo, altrimenti l'attivazione è persa.
 
 Gli altri \textit{task} presenti nel sistema sono:
 \begin{itemize}
@@ -222,9 +224,9 @@ Gli altri \textit{task} presenti nel sistema sono:
 	\item Task5, Task6, Task7: rappresentano gli eventuali \textit{player} aggiuntivi (non presenti in ogni condizione di test);
 	\item Task0: rappresenta il target che i \textit{player} devono raggiungere.
 \end{itemize}
-Tutti questi \textit{task} hanno una configurazione di base simile: \textit{stack} condiviso e un'unica attivazione, ma cambiano nelle varie prove di questo studio in base al supporto o meno al prerilascio ed eventuali \textit{offset} dall'inizializzazione del sistema.
+Tutti questi \textit{task} hanno una configurazione di base simile: \textit{stack} condiviso e un'unica attivazione (come per il Task1), ma cambiano nelle varie prove di questo studio in base al supporto o meno al prerilascio ed eventuali \textit{offset} dall'inizializzazione del sistema.
 
-Oltre alla configurazione dei \textit{task}, è necessario definire i COUNTER necessari, in questo caso solamente uno che mantenga il \textit{timing} del sistema:
+Oltre alla configurazione dei \textit{task}, serve definire i COUNTER necessari, in questo caso solamente uno che mantenga il \textit{timing} del sistema:
 \begin{lstlisting}[language=C]
 1  COUNTER SystemTimer {
 2	  MINCYCLE = 1;                
@@ -244,14 +246,14 @@ Sono definiti anche gli allarmi che definiscono le \textit{release} dei vari \te
 1  ALARM AlarmTask2 {
 2	  COUNTER = SystemTimer;
 3	  ACTION = ACTIVATETASK { TASK = Task2; };
-4	  AUTOSTART = TRUE { ALARMTIME = 20; CYCLETIME = 20; };
+4	  AUTOSTART = TRUE { ALARMTIME = 20; CYCLETIME = 10; };
 5  };
 \end{lstlisting}
-Un esempio è l'ALARM per il Task2, attivato dal SystemTimer, in questo esempio a partire da 20ms rispetto all'inizializzazione del sistema e, in seguito, riattivato ogni 20ms.
+Un esempio è l'ALARM per il Task2, attivato dal SystemTimer, in questo esempio a partire da 20ms rispetto all'inizializzazione del sistema e, in seguito, riattivato ogni 10ms.
 
 Oltre a questi sono definiti anche tutti gli ISR1 e ISR2 necessari per la sincronizzazione e comunicazione del microcontrollore con il display, dell'invio dei dati dalla \textit{board} all'esterno tramite seriale e dell'utilizzo del pulsante fisico presente sulla \textit{board}.
 
-Per trasmettere i dati di \textit{log} dalla \textit{board} all'esterno nel modo più efficiente possibile, si è deciso di implementare una coda circolare che trasmette tramite il modulo DMA (\textit{Direct Memory Access}). Così facendo, l'utilizzo della CPU è limitato al massimo, in quanto sarà necessario il suo intervento solamente al termine della trasmissione del flusso dati, all'attivazione dell'interrupt relativo. In questo modo si riesce a sfruttare al meglio l'intera banda disponibile sulla \textit{board} per la trasmissione UART senza interferire significativamente sull'esecuzione del sistema.
+Per trasmettere i dati di \textit{log} dalla \textit{board} all'esterno nel modo più efficiente possibile, ho deciso di implementare una coda circolare che trasmette tramite il modulo DMA (\textit{Direct Memory Access}). Così facendo, l'utilizzo della CPU è limitato al massimo, in quanto è necessario il suo intervento solamente al termine della trasmissione del flusso dati, all'attivazione del relarivo \textit{interrupt}. In questo modo riesco a sfruttare al meglio l'intera banda disponibile sulla \textit{board} per la trasmissione UART senza interferire significativamente sull'esecuzione del sistema.
 
 L'inserimento dei dati nella coda circolare è effettuata direttamente dai \textit{task} o tramite i vari \textit{hook} di sistema, definiti nello standard OSEK/VDX e implementati da ERIKA³. Quelli utilizzati in questo progetto sono:
 \begin{itemize}
@@ -269,45 +271,45 @@ L'inserimento dei dati nella coda circolare è effettuata direttamente dai \text
 		\caption{\textit{\textit{PreTaskHook} e \textit{PostTaskHook} - Fonte: OSEK 2.2.3 specification}}
 		\label{taskHook}
 	\end{figure}
-	\item ErrorHook: viene eseguito ogni qualvolta ci siano errori del sistema operativo, sia temporanei che fatali.  È possibile gestire differenti tipi di errore, in base allo '\textit{StatusType error}' che l'ha generato. Nello studio in questione, definito che ogni \textit{task} supporta una sola attivazione e ogni \textit{task} ha \textit{deadline} implicita uguale al periodo, era di interesse sapere quando l'ErrorHook riportasse un errore di tipo 'E\_OS\_LIMIT', che viene invocato ogni qual volta viene eseguita un'attivazione di un \textit{task} già in esecuzione. In questo modo, si può determinare se un \textit{task} non ha terminato entro la \textit{deadline}.
+	\item ErrorHook: viene eseguito ogni qualvolta ci siano errori del sistema operativo, sia temporanei che fatali.  È possibile gestire differenti tipi di errore, in base allo '\textit{StatusType error}' che l'ha generato. Nello studio in questione, definito che ogni \textit{task} supporta una sola attivazione e ogni \textit{task} ha \textit{deadline} implicita uguale al periodo, è di interesse sapere quando l'ErrorHook riporta un errore di tipo 'E\_OS\_LIMIT', che viene invocato ogni qual volta viene eseguita un'attivazione di un \textit{task} già in esecuzione. In questo modo si può determinare se un \textit{task} non ha terminato entro la \textit{deadline}.
 \end{itemize}
-PreTaskHook, PostTaskHook ed ErrorHook sono stati quindi utilizzati per il \textit{log} del sistema per avere un \textit{\textit{timestamp}} dell'esecuzione di alcuni \textit{task} e per identificare eventuali \textit{deadline-miss}.
+Ho quindi utilizzato PreTaskHook, PostTaskHook ed ErrorHook per il \textit{log} del sistema per avere un \textit{\textit{timestamp}} dell'esecuzione di alcuni \textit{task} e per identificare eventuali \textit{deadline-miss}.
 
 \subsection{Test}
-Il sistema viene testato in differenti condizioni, suddivisibili in base al loro scopo in due categorie:
+Ho testato il sistema in differenti condizioni, suddivisibili in base al loro scopo in due categorie:
 \begin{enumerate}
-	\item Test del sistema senza carico, ovvero mantenendo la computazione dei \textit{task} ridotta, ma analizzando come, diminuendo il \textit{release time} fra un \textit{job} e il successivo, il comportamento del sistema reagisce;
-	\item Test del sistema all'aumentare delle interferenze, che possono essere causate da altri \textit{task} o dalla pressione del pulsante esterno e quindi dall'azionamento del relativo ISR2 che attiva il Task0. Si mantiene dunque costante il \textit{timing} di attivazione dei \textit{task}, ma si valuta come al variare del carico dei \textit{task} o delle pressioni esterne il sistema viene perturbato.
+	\item Test del sistema senza carico, ovvero mantenendo la computazione dei \textit{task} ridotta ma analizzando come, diminuendo il \textit{release time} fra un \textit{job} e il successivo, il sistema reagisce;
+	\item Test del sistema all'aumentare delle interferenze, che possono essere causate da altri \textit{task} o dalla pressione del pulsante esterno e quindi dall'azionamento del relativo ISR2 che attiva il Task0. Si mantiene dunque costante il \textit{timing} di attivazione dei \textit{task} ma si valuta come al variare del carico dei \textit{task} o delle pressioni esterne il sistema viene perturbato.
 \end{enumerate}
-Per ogni test si sono memorizzati, trasmettendo tramite DMA, i dati in un file di log esterno, comprendente un id incrementale della entry, il \textit{task} che ha eseguito o l'eventuale errore relativo ad un \textit{task}, il \textit{timestamp} del tempo di esecuzione del \textit{task} o il \textit{timestamp} dell'errore e l'eventuale carico \% della CPU.
+Per ogni test ho memorizzato, trasmettendo tramite DMA, i dati in un file di log esterno, comprendente un id incrementale della entry, il \textit{task} che ha eseguito o l'eventuale errore relativo ad un \textit{task}, il \textit{timestamp} del tempo di esecuzione del \textit{task} o il \textit{timestamp} dell'errore e l'eventuale carico \% della CPU.
 
-D'ora in poi, verranno chiamati \textit{player} i \textit{task} che concorrono per raggiungere le coordinate target dello schermo.
+D'ora in poi, chiamerò \textit{player} i \textit{task} che concorrono per raggiungere le coordinate target dello schermo.
 \subsubsection{Test del sistema senza carico}
-Durante questo test, si è testato il sistema per 10 secondi e si è mantenuto il carico dei \textit{player} molto esiguo. Questi infatti, avendo a disposizione le coordinate X e Y del target, devono calcolare rispetto alla loro posizione il movimento da eseguire (il \textit{player} si può muovere di un solo pixel per direzione alla volta), quindi inviare la nuova posizione al modello dei dati poi elaborato dal \textit{framework} TouchGFX.
+Durante questo scenario ho testato il sistema per 10 secondi e ho mantenuto il carico dei \textit{player} molto esiguo. Questi infatti, avendo a disposizione le coordinate X e Y del target, devono calcolare rispetto alla loro posizione il movimento da eseguire (il \textit{player} si può muovere di un solo pixel per direzione alla volta), quindi inviare la nuova posizione al modello dei dati poi elaborato dal \textit{framework} TouchGFX.
 
-Sono stati effettuati i test sia con 3 \textit{player} - e quindi 6 \textit{task} totali - sia con 6 \textit{player} - e quindi 9 \textit{task} totali. 
+Ho effettuato i test sia con 3 \textit{player} - e quindi 6 \textit{task} totali - sia con 6 \textit{player} - e quindi 9 \textit{task} totali. 
 
-Come prima cosa si è testato come reagisce il sistema senza nessun \textit{offset} sui \textit{player}, ovvero quando il \textit{release time} iniziale è per tutti uguale a 0. Come si può notare dalla tabella e dalla Figura \ref{noC-noO}, la differenza nel numero di errori di attivazione fra il sistema con 3 \textit{player} e quello con 6, comincia ad essere rilevante quando il periodo dei \textit{player} risulta uguale a 1ms. Questo era prevedibile, in quanto essendo il carico sul singolo \textit{task} esiguo, con \textit{release event} ben distanziati fra loro, tutti i \textit{player} hanno il tempo necessario per eseguire. Quando invece il periodo, e di conseguenza la \textit{laxity}, viene ridotto al minimo, il maggior numero di \textit{player} causa maggior interferenza che conclude in un maggior numero di errori di attivazione, e di conseguenza di \textit{deadline miss}. È possibile notare come il maggior numero di \textit{player} influisca di più anche sul carico della CPU man mano che la frequenza di attivazione aumenta.
+Come prima cosa ho testato come reagisce il sistema senza nessun \textit{offset} sui \textit{player}, ovvero quando il \textit{release time} iniziale è per tutti uguale a 0. Come si può notare dalla tabella e dalla Figura \ref{noC-noO}, la differenza nel numero di errori di attivazione fra il sistema con 3 \textit{player} e quello con 6, comincia ad essere rilevante quando il periodo dei \textit{player} risulta uguale a 2ms. Questo era prevedibile, in quanto essendo il carico sul singolo \textit{task} esiguo, con \textit{release event} ben distanziati fra loro, tutti i \textit{player} hanno il tempo necessario per eseguire. Quando invece il periodo, e di conseguenza la \textit{laxity}, ovvero quanto un \textit{job} può ancora rimanere in attesa prima di dover eseguire per completare entro la \textit{deadline}, viene ridotto al minimo, il maggior numero di \textit{player} può causare maggior interferenza che conclude in un maggior numero di errori di attivazione e di conseguenza di \textit{deadline miss}. È possibile notare come il maggior numero di \textit{player} influisca di più anche sul carico della CPU man mano che la frequenza di attivazione aumenta.
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=6in]{image/NO_CARICO-AUTOSTART.png}
-	\caption{Confronto n. errori e \% CPU con 3 e 6 \textit{player} senza \textit{offset}}
+	\caption{Confronto \textit{deadline miss} dei \textit{task} e \% CPU con 3 e 6 \textit{player} senza \textit{offset}}
 	\label{noC-noO}
 \end{figure}
 È inoltre testato se l'aggiunta di un \textit{offset} arbitrario possa diminuire il numero di errori e quindi di \textit{deadline miss}; in questo caso i primi release event dei \textit{player} sono stati posti a 20ms (per i \textit{player} 1 e 4), 23ms (per i \textit{player} 2 e 5) e 27ms (per i \textit{player} 3 e 6). Essendo i \textit{task} periodici, l'\textit{offset} si è poi mantenuto nel tempo anche nelle successive attivazioni.
 
-Come si può vedere nella Figura \ref{noC-siO}, un \textit{offset} sull'attivazione dei \textit{task}, in modo che i \textit{release event} avvengano in momenti sufficientemente distanziati, migliora il numero di errori di attivazione quando il periodo dei \textit{player} è relativamente grande. Con periodo uguale a 1ms, come ci si poteva aspettare, non si ha un miglioramento delle prestazioni. Questo perchè, ovviamente, l'utilità dell'\textit{offset} è nulla se i \textit{release event} dei \textit{player} si sovrappongono perchè il periodo è minore o uguale alla differenza fra l'\textit{offset} di due \textit{task}.
+Come si può vedere nella Figura \ref{noC-siO}, un \textit{offset} sull'attivazione dei \textit{task}, in modo che i \textit{release event} avvengano in momenti sufficientemente distanziati, migliora il numero di errori di attivazione. Con periodo uguale a 1ms mi sarei aspettato un minor miglioramento delle prestazioni, considerando che l'utilità dell'\textit{offset} è nulla se i \textit{release event} dei \textit{player} si sovrappongono perchè il periodo è minore o uguale alla differenza fra l'\textit{offset} di due \textit{task}.
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=6in]{image/NO_CARICO-OFFSET.png}
-	\caption{Confronto n. errori e \% CPU con 3 e 6 \textit{player} con \textit{offset} arbitrario}
+	\caption{Confronto \textit{deadline miss} dei \textit{task} e \% CPU con 3 e 6 \textit{player} con \textit{offset} arbitrario}
 	\label{noC-siO}
 \end{figure}
 
 \subsubsection{Test del sistema all'aumentare del carico}
-Durante questo test, il periodo di attivazione dei \textit{task} è stato mantenuto costante a 10ms, si sono definiti solamente 3 \textit{player} e si sono utilizzati gli \textit{offset} scelti nel precedente test. Questo perchè così facendo si parte da una base in cui, senza carico, non si era ottenuto nessun errore di attivazione.
+Durante questo test ho mantenuto costante a 10 ms il periodo di attivazione dei \textit{task} e ho definito solamente 3 \textit{player}, utilizzando gli \textit{offset} scelti nel precedente test. Questo perchè così facendo parto da una base in cui, senza carico, non ho ottenuto nessun errore di attivazione.
 
-Si procede invece ad aumentare il carico, in particolare sul \textit{player} 3, e a testare se eventuali pressioni del pulsante fisico presente sulla \textit{board}, che attivano il Task0 (target), influiscano sul numero di errori di attivazione.
+Ho invece aumentato il carico, in particolare sul \textit{player} 3, e testato se eventuali pressioni del pulsante fisico presente sulla \textit{board}, che attivano il Task0 (target), influiscono sul numero di errori di attivazione.
 
 L'aumento del carico sul \textit{player} 3 è determinato dal semplice codice qui di seguito:
 \begin{lstlisting}[language=C]
@@ -316,39 +318,44 @@ L'aumento del carico sul \textit{player} 3 è determinato dal semplice codice qu
 3		  sum += i+z;
 \end{lstlisting}
 in cui la variabile 'load' rappresenta il carico sul \textit{player} 3 che viene aumentato nei vari test.
+L'iterazione non viene ottimizzata dal compilatore, essendo la variabile 'sum' definita come \textit{'volatile'}.
 
-Il sistema è stato testato con prerilascio attivato per tutti i \textit{task}, con prerilascio disattivato per i \textit{player} e infine con prerilascio ma con il \textit{player} 3 con una priorità maggiore di quella degli altri \textit{player}. Negli altri due test invece al \textit{player} 3 è stata assegnata una priorità minore rispetto agli altri.
+Ho testato il sistema con prerilascio attivato per tutti i \textit{task}, con prerilascio disattivato per i \textit{player} e infine con prerilascio ma con il \textit{player} 3 con una priorità maggiore di quella degli altri \textit{player}. Negli altri due test, invece, ho assegnato  al \textit{player} 3 una priorità minore rispetto agli altri.
 
-È importante notare come il \textit{player} 3, già con carico uguale a 400, impiega 10ms per completare l'esecuzione, quindi ogni carico aggiuntivo rende il \textit{task} non \textit{feasible}. È di interesse quindi valutare come la presenza di un \textit{task} non \textit{feasible} influisca sull'intero sistema in esecuzione e se qualche configurazione aiuti a mitigare le \textit{deadline miss} totali.
+È importante notare come il \textit{player} 3, già con carico uguale a 300, impiega 8/9 ms per completare l'esecuzione, quindi ogni carico aggiuntivo rende il \textit{task} non \textit{feasible}. È di interesse quindi valutare come la presenza di un \textit{task} non \textit{feasible} influisce sull'intero sistema in esecuzione e se qualche configurazione aiuti a mitigare le \textit{deadline miss} totali.
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=7in]{image/CARICO-OFFSET.png}
-	\caption{Confronto n. errori e \% CPU con \textit{preemption}, senza \textit{preemption} e con \textit{player} 3 con priorità alta, con \textit{offset} arbitrario}
+	\caption{Confronto \textit{deadline miss} dei \textit{task} e \% CPU con \textit{preemption}, senza \textit{preemption} e con \textit{player} 3 con priorità alta, con \textit{offset} arbitrario}
 	\label{siC-siO}
 \end{figure}
 Come si può notare dai risultati ottenuti in Figura\ref{siC-siO}, la presenza di prerilascio diminuisce di molto il numero di errori di attivazione. La differenza fra l'esecuzione senza prerilascio e con prerilascio ma con il \textit{player} 3 a priorità maggiore degli altri due \textit{player} è esigua. Questo era prevedibile, essendo il \textit{player} 3 il \textit{task} bloccante e avendo un tempo d'esecuzione molto maggiore degli altri \textit{task}. 
 
-Il carico \% sulla CPU risulta però avere valori anomali. In alcuni test, inoltre, ha raggiunto un valore di picco > 100\%; ciò potrebbe indicare un errore nella libreria STM utilizzata per ottenere il valore, ma ciò non è stato approfondito.
+Si nota come il carico \% sulla CPU non mantiene un andamento lineare al crescere del carico sul \textit{player} 3 quando lo \textit{schedule} non è \textit{feasible} (carico > 300). Ciò può essere dovuto al fatto che la nuova attivazione di un \textit{task} mentre un suo vecchio \textit{job} è ancora in esecuzione causa la perdita di quella attivazione, e dunque quel task una volta terminato rimarrà in attesa di un nuovo allarme senza eseguire. È da notare, comunque, che in alcuni test con un'altra applicazione, il carico ha raggiunto un valore di picco > 100\%; ciò potrebbe indicare un errore nella libreria STM utilizzata per ottenere il valore, ma ciò non è stato approfondito.
 
-Per completezza, si è testato il sistema anche senza utilizzare alcun \textit{offset}.
+Per completezza, ho testato il sistema anche senza utilizzare alcun \textit{offset}.
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=7in]{image/CARICO-AUTOSTART.png}
-	\caption{Confronto n. errori e \% CPU con \textit{preemption}, senza \textit{preemption} e con \textit{player} 3 con priorità alta, senza \textit{offset}}
+	\caption{Confronto \textit{deadline miss} dei \textit{task} e \% CPU con \textit{preemption}, senza \textit{preemption} e con \textit{player} 3 con priorità alta, senza \textit{offset}}
 	\label{siC-noO}
 \end{figure}
 La differenza più grande si nota durante l'esecuzione del sistema, visualizzando il comportamento dei \textit{player} sullo schermo. 
 
-Con \textit{preepmtion} attiva, il risultato a schermo è il medesimo sia con \textit{offset} che senza: i \textit{player} 1 e 2 si muovono alla stessa velocità mentre il \textit{player} 3 risulta più lento.
+Con \textit{preemption} attiva, il risultato a schermo è il medesimo sia con \textit{offset} che senza: i \textit{player} 1 e 2 si muovono alla stessa velocità mentre il \textit{player} 3 risulta più lento.
 
-Con \textit{preepmtion} disattivata, l'utilizzo dell'\textit{offset} mitiga l'effetto delle interferenze del \textit{player}3 sugli altri \textit{task}, in particolare sul \textit{player}2, che, con alcuni carichi, risulta vibilmente più veloce.
+Con \textit{preemption} disattivata, l'utilizzo dell'\textit{offset} mitiga l'effetto delle interferenze del \textit{player}3 sugli altri \textit{task}, in particolare sul \textit{player}2, che, con alcuni carichi, risulta visibilmente più veloce.
 
 Con il \textit{player} 3 a priorità più alta, utilizzando l'\textit{offset} si nota lo stesso effetto precedente, mentre senza \textit{offset} il \textit{player} 3 risulta visibilmente più veloce, a conferma di un maggior numero di errori di attivazione per gli altri due \textit{player}.
 
 La pressione del pulsante fisico non risulta causare errori di attivazione aggiuntivi, nemmeno quando l'input è stato attivato assiduamente.
 
+Per trovare una corrispondenza fra ciò che si nota a schermo e quello che accade nel sistema sottostante, ho cercato di analizzare quali \textit{task} subiscono maggiori interferenze, suddividendo le \textit{deadline miss} per ogni \textit{task}. 
+Per fare ciò è necessario capire a quale \textit{task} si riferisce l'errore riportato nell'\textit{ErrorHook}, ovvero quale allarme ha cercato di attivare il \textit{task} interessato. ERIKA³ fornisce alcune API che consentono di interrogare il sistema quando viene invocato l'\textit{ErrorHook}, e in particolare la funzione 'OSErrorGetServiceId()' riporta quale servizio ha generato l'errore; in seguito, sono fornite alcune funzionalità per ottenere maggiori informazioni su quel servizio, come l'identificativo dell'allarme, del \textit{task} o dell'\textit{interrupt} a cui fa riferimento, e quindi la possibilità di capire chi ha causato l'errore. Purtroppo ERIKA³ non supporta alcuna API per la gestione degli errori derivanti da attivazioni periodiche di \textit{task}. Dopo aver escluso questa opzione, ho quindi cercato di agire direttamente a livello del \textit{kernel}, ma purtroppo oltre ad ottenere ciò che cercavo tramite un \textit{debugger} controllando a \textit{runtime} lo stato di alcune variabili di sistema, non sono riuscito ad automatizzare il lavoro e avere una visione per tutta la durata del test.
+
 \section{Conclusioni}
-Durante questo studio si è visto come l'utilizzo di \textit{offset} e di \textit{preemption} possono aiutare a ridurre gli errori di attivazione quando i \textit{task} sono \textit{feasible}. Quando le condizioni non permettono di ottenere uno \textit{schedule feasible}, invece, l'utilizzo di \textit{offset} sembra non portare nessuna miglioria, mentre inibire il prerilascio o assegnare al \textit{task} bloccante una priorità maggiore degli altri \textit{task} peggiora la situazione.
-Lo studio ha ampi margini di ricerca aggiuntiva, come ad esempio l'identificazione dei \textit{task} che hanno subito maggior interferenza durante l'esecuzione, intesa come numero di errori di attivazione, ma anche tramite una misurazione precisa del \textit{jitter} dei \textit{task} e di come vari il tempo d'esecuzione di questi.
+Durante questo studio si è visto come l'utilizzo di \textit{offset} e di \textit{preemption} possono aiutare a ridurre gli errori di attivazione, e quindi di \textit{deadline miss}, quando le interferenze fra \textit{task} e il carico sono contenuti e, nella maggior parte dei casi, anche quando lo \textit{schedule} non è \textit{feasible}. Nel test del sistema senza carico, infatti, noto una sostanziale differenza fra l'esecuzione del sistema applicando un \textit{offset} iniziale, mentre nel test all'aumentare del carico noto come la presenza del prerilascio mitighi di molto le \textit{deadline miss}.
+
+Lo studio ha margini di ricerca aggiuntiva, come ad esempio l'identificazione dei \textit{task} che hanno subito maggior interferenza durante l'esecuzione (approfondimento non riuscito in questo studio), ma anche tramite una misurazione precisa del \textit{jitter} dei \textit{task} e di come vari il tempo d'esecuzione di questi.
 
 \end{document}

@@ -35,8 +35,6 @@ void Uart_sendstring (const char *s)
 
 	if(_tx_buffer->tail > _tx_buffer->head)
 		loggg = true;
-	if(HAL_GetTick() > 100000)
-		loggg = false;
 
 	if(greenFlag) {
 		if(_tx_buffer->head > _tx_buffer->tail) {

@@ -126,7 +126,7 @@ CPU mySystem {
 	
   // GUI
   TASK Task1 {
-    PRIORITY = 7;
+    PRIORITY = 9;
     ACTIVATION = 1;
     SCHEDULE = FULL;
     AUTOSTART = TRUE;
@@ -141,7 +141,7 @@ CPU mySystem {
 
   // Player1
   TASK Task2 {
-    PRIORITY = 4;
+    PRIORITY = 6;
     ACTIVATION = 1;
     SCHEDULE = FULL;
     AUTOSTART = FALSE;
@@ -161,7 +161,7 @@ CPU mySystem {
   
   // Player3
   TASK Task4 {
-    PRIORITY = 6;
+    PRIORITY = 4;
     ACTIVATION = 1;
     SCHEDULE = FULL;
     AUTOSTART = FALSE;
@@ -172,7 +172,7 @@ CPU mySystem {
 //  ------------------------------------------------------------------
 //  // Player4
 //  TASK Task5 {
-//    PRIORITY = 4;
+//    PRIORITY = 7;
 //    ACTIVATION = 1;
 //    SCHEDULE = FULL;
 //    AUTOSTART = FALSE;
@@ -181,7 +181,7 @@ CPU mySystem {
 //
 //  // Player5
 //  TASK Task6 {
-//    PRIORITY = 5;
+//    PRIORITY = 8;
 //    ACTIVATION = 1;
 //	SCHEDULE = FULL;
 //    AUTOSTART = FALSE;
@@ -190,7 +190,7 @@ CPU mySystem {
 //  
 //  // Player6
 //  TASK Task7 {
-//    PRIORITY = 6;
+//    PRIORITY = 3;
 //    ACTIVATION = 1;
 //    SCHEDULE = FULL;
 //    AUTOSTART = FALSE;
@@ -232,38 +232,38 @@ CPU mySystem {
   ALARM AlarmTask2 {
     COUNTER = SystemTimer;
     ACTION = ACTIVATETASK { TASK = Task2; };
-    AUTOSTART = TRUE { ALARMTIME = 0; CYCLETIME = 10; };
+    AUTOSTART = TRUE { ALARMTIME = 10; CYCLETIME = 10; };
   };
   
   ALARM AlarmTask3 {
     COUNTER = SystemTimer;
     ACTION = ACTIVATETASK { TASK = Task3; };
-    AUTOSTART = TRUE { ALARMTIME = 0; CYCLETIME = 10; };
+    AUTOSTART = TRUE { ALARMTIME = 10; CYCLETIME = 10; };
   };
   
   ALARM AlarmTask4 {
     COUNTER = SystemTimer;
     ACTION = ACTIVATETASK { TASK = Task4; };
-    AUTOSTART = TRUE { ALARMTIME = 0; CYCLETIME = 10; };
+    AUTOSTART = TRUE { ALARMTIME = 10; CYCLETIME = 10; };
   };
   
 //  ------------------------------------------------------------------
 //  ALARM AlarmTask5 {
 //    COUNTER = SystemTimer;
 //    ACTION = ACTIVATETASK { TASK = Task5; };
-//    AUTOSTART = TRUE { ALARMTIME = 0; CYCLETIME = 10; };
+//    AUTOSTART = TRUE { ALARMTIME = 20; CYCLETIME = 10; };
 //  };
 //  
 //  ALARM AlarmTask6 {
 //    COUNTER = SystemTimer;
 //    ACTION = ACTIVATETASK { TASK = Task6; };
-//    AUTOSTART = TRUE { ALARMTIME = 0; CYCLETIME = 10; };
+//    AUTOSTART = TRUE { ALARMTIME = 23; CYCLETIME = 10; };
 //  };
 //  
 //  ALARM AlarmTask7 {
 //    COUNTER = SystemTimer;
 //    ACTION = ACTIVATETASK { TASK = Task7; };
-//    AUTOSTART = TRUE { ALARMTIME = 0; CYCLETIME = 10; };
+//    AUTOSTART = TRUE { ALARMTIME = 27; CYCLETIME = 10; };
 //  };
 //  ------------------------------------------------------------------
   
