@@ -1,0 +1,66 @@
+% !TeX spellcheck = it_IT
+\documentclass{article}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{lipsum}		% Can be removed after putting your text content
+\usepackage{listings}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{float}
+
+\renewcommand{\figurename}{Figura}
+\renewcommand{\tablename}{Tabella}
+
+\lstset{
+	basicstyle=\ttfamily\footnotesize
+}  
+
+\begin{document}
+
+\section{Hook ed ErrorHook}
+\subsection{OSEK/VSX}
+La specifica OSEK/VDX definisce le \textit{hook routines} come un mezzo per consentire azioni definite dall'utente riferite a processi interni del sistema operativo. Queste hanno alcune caratteristiche specifiche:
+
+\begin{itemize}
+	\item sono chiamate dal sistema operativo, in un contesto speciale dipendente dal sistema operativo;
+	\item con priorità maggiore di tutti i \textit{task*;
+	\item non possono essere interrotte da ISR2;
+	\item con un'interfaccia standardizzata, ma con funzionalità non standardizzate (perchè definite dall'utente).
+\end{itemize}
+
+Esse possono essere utilizzate allo \textit{startup} del sistema (*StartupHook*), al suo \textit{shutdown (ShutdownHook)*, per \textit{debugging (PreTaskHook/PostTaskHook/IdleHook)} o per \textit{error handling (ErrorHook)*.
+
+La maggior parte dei servizi del sistema operativo non è consentita per le \textit{hook routines*. Questa restrizione è necessaria per ridurre la complessità del sistema.
+
+La \textit{routine ErrorHook} viene chiamata se un servizio del sistema operativo restituisce un valore di \textit{StatusType} diverso da 'E_OK'. Lo scopo dell'*ErrorHook} è quindi di trattare in modo centralizzato alcuni errori del sistema operativo relativi all'esecuzione del sistema.
+
+\subsection{ERIKA³}
+Nello specifico dell'attivazione di un \textit{task*, i possibili valori di \textit{StatusType} sono 'E_OK', 'E_OS_LIMIT', 'E_OS_ID' (solo per \textit{task} di tipo \textit{extended*). Lo stato di interesse è 'E_OS_LIMIT', che identifica troppe attivazioni pendenti di un \textit{task*. È importante notare come questo stato sia possibile solamente per primitive di tipo \textit{ActivateTask} e \textit{ChainTask} e attivazioni del \textit{task} allo scattare di un allarme.
+
+Un allarme (*Alarm*) è un meccanismo di notifica collegato a uno specifico \textit{Counter} che, una volta raggiunto il \textit{tick} stabilito, definito nel \textit{file} OIL, può attivare un \textit{task*, impostare un evento o invocare una \textit{callback*. L'esecuzione della notifica relativa a un allarme avviene all'interno della funzione \textit{IncrementCounter} che incrementa il \textit{tick} del contatore collegato a quell'allarme. Questa funzione è atomica e al suo termine avviene il \textit{rescheduling*, se questa è chiamata a livello di \textit{task*, o, se chiamata da un ISR, il \textit{rescheduling} avviene al termine dell'ISR nidificato più esterno.
+
+Riguardo il numero di attivazioni di un \textit{task*, il valore massimo di attivazioni pendenti è impostato nel \textit{file} OIL. Il valore di attivazioni pendenti a \textit{runtime} viene modificato in due momenti:
+
+\begin{itemize}
+	\item All'attivazione del \textit{task*, sia questa causata da un allarme o dalle primitive \textit{ActivateTask*/*ChainTask*, viene invocata la funzione 'osEE_handle_action', la quale a sua volta chiama 'osEE_task_activated'. Questa, come si può vedere dal codice riportato nella Figura ..., verifica il valore del numero di attivazioni pendenti del \textit{task} a cui fa riferimento il parametro passato nella chiamata e, se minore del numero massimo di attivazioni impostate per quel \textit{task*, aumenta il numero di attivazioni pendenti e imposta la variabile che identifica lo \textit{StatusType} a 'E_OK', in caso contrario imposta quest'ultima a 'E_OS_LIMIT'.
+	\item Al termine dell'esecuzione del \textit{task} viene invocata la funzione 'osEE_task_end' che, come si può vedere nella Figura ... diminuisce il valore del numero di attivazioni pendenti del \textit{task} a cui fa riferimento il parametro passato nella chiamata e modifica lo stato del \textit{task} in base al numero di attivazioni pendenti rimanenti.
+\end{itemize}
+
+Durante l'attivazione del \textit{task*, se il valore di \textit{StatusType} definito dalla variabile 'ev' nel codice in Figura ... è diverso da 'E_OK', la funzione 'osEE_handle_action' invoca la funzione 'osEE_call_error_hook' che a sua volta chiama la funzione 'ErrorHook' implementata dall'utente come definito nello standard OSEK/VDX.
+
+In Figura ... è riportato lo \textit{stack} delle chiamate nel caso di invocazione dell'*ErrorHook*.
+
+
+
+
+
+
+\end{document}
